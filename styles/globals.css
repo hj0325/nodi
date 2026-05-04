@@ -116,7 +116,8 @@ h6,
 }
 
 .tm-canvas-flow .react-flow__node {
-  transition: transform 3000ms ease-in, filter 220ms ease, opacity 220ms ease;
+  /* transform은 React Flow가 드래그/뷰포트 이동마다 갱신 — transition을 주면 선만 즉시 따라가고 노드가 늦게 따라옴 */
+  transition: filter 220ms ease, opacity 220ms ease;
 }
 
 .tm-canvas-flow .react-flow__node.tm-node-shell,

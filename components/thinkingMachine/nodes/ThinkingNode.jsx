@@ -42,12 +42,22 @@ function getFiveWhLabelFromData(data = {}) {
   return FIVE_WH_LABELS[normalized] || "How";
 }
 
-function MetaChip({ label, className }) {
+function MetaChip({ label, iconSrc, iconSize = 10, className, style }) {
   if (!label) return null;
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold leading-none tracking-[-0.01em] ${className}`}
+      style={style}
     >
+      {iconSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={iconSrc}
+          alt=""
+          aria-hidden
+          style={{ width: iconSize, height: iconSize, objectFit: "contain", marginRight: 3 }}
+        />
+      ) : null}
       {label}
     </span>
   );
@@ -114,9 +124,14 @@ export default function ThinkingNode({ data = {} }) {
               {data.content}
             </div>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              <MetaChip label={sourceMeta.label} className="bg-[#DBF4CD] text-[#5F6652]" />
-              <MetaChip label={fiveWhLabel} className="bg-[#C3EEE7] text-[#5F6652]" />
-              <MetaChip label={phaseLabel} className="bg-[#CADBFF] text-[#5F6652]" />
+              <MetaChip label={sourceMeta.label} iconSrc="/profile.png" iconSize={9} className="bg-[#DBF4CD] text-[#5F6652]" />
+              <MetaChip label={fiveWhLabel} iconSrc="/why.png" className="bg-[#C3EEE7] text-[#5F6652]" />
+              <MetaChip
+                label={phaseLabel}
+                iconSrc={phaseLabel === "Solution" ? "/bulb.png" : "/problem.png"}
+                className="bg-[#CADBFF] text-[#5F6652]"
+                style={{ paddingLeft: 7 }}
+              />
             </div>
           </div>
         </div>

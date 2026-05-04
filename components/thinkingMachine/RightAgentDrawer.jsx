@@ -340,8 +340,17 @@ export default function RightAgentDrawer({
                       ) : null}
 
                       {activeSuggestion ? (
-                        <div className={`rounded-[14px] border ${categoryColors.border} ${categoryColors.tint} px-3 py-3`}>
-                          <div className="flex flex-wrap items-center gap-1.5">
+                        <div
+                          className={`rounded-[14px] border ${categoryColors.border} ${categoryColors.tint} px-3`}
+                          style={{ paddingTop: 11, paddingBottom: 17 }}
+                        >
+                          <div
+                            className="font-heading line-clamp-1 text-xs font-semibold text-slate-800"
+                            style={{ position: "relative", left: 3 }}
+                          >
+                            {activeSuggestion.title}
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
                             {[
                               ["reasoning", activeSuggestionTags.reasoning],
                               ["lens", activeSuggestionTags.lens],
@@ -355,22 +364,6 @@ export default function RightAgentDrawer({
                               );
                             })}
                           </div>
-                          <div className="font-heading mt-1 line-clamp-1 text-xs font-semibold text-slate-800">
-                            {activeSuggestion.title}
-                          </div>
-                          {activeSuggestion?.type === "attachedNodes" && Array.isArray(activeSuggestion?.attached_nodes) && (
-                            <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-                              {activeSuggestion.attached_nodes.map((n) => (
-                                <span
-                                  key={n.id}
-                                  className="inline-flex shrink-0 max-w-full items-center gap-1 rounded-full border border-white/70 bg-white/70 px-2 py-0.5 text-[10px] text-slate-700"
-                                  title={n?.content || n?.title || ""}
-                                >
-                                  <span className="font-semibold">{n?.title || "Node"}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       ) : null}
 

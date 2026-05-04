@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import ReactFlow, {
     Background,
     ConnectionMode,
+    useStoreApi,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import ThinkingNode from "./nodes/ThinkingNode";
@@ -12,6 +13,15 @@ import ImageDraftNode from "./nodes/ImageDraftNode";
 import IdeaGroupNode from "./nodes/IdeaGroupNode";
 import ConnectorEdge from "./edges/ConnectorEdge";
 import { useNodePorts } from "@/components/thinkingMachine/hooks/useNodePorts";
+
+/** RF 기본 StoreUpdater는 useEffect로 nodes를 반영해, 드래그 한 프레임 동안 엣지만 앞서가는 현상이 난다. 페인트 전에 스토어를 맞춘다. */
+function MirrorNodesToStoreBeforePaint({ nodes }) {
+    const store = useStoreApi();
+    useLayoutEffect(() => {
+        store.getState().setNodes(nodes);
+    }, [nodes, store]);
+    return null;
+}
 
 export default function NodeMap({
     nodes,
@@ -92,6 +102,7 @@ export default function NodeMap({
                 panOnDrag={isCanvasInteractive ? (selectionBoxEnabled ? [1, 2] : true) : false}
                 selectionOnDrag={isCanvasInteractive && selectionBoxEnabled}
             >
+                <MirrorNodesToStoreBeforePaint nodes={displayNodes} />
                 <Background gap={20} color="#FFFFFF4D" />
             </ReactFlow>
         </div>

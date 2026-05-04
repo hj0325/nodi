@@ -36,7 +36,9 @@ export default function Home() {
     setErrorMessage("");
 
     if (!GOOGLE_CLIENT_ID) {
-      setErrorMessage("Google sign-in is not configured. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to .env.local.");
+      setErrorMessage(
+        "Google sign-in is not configured. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID to .env.local.",
+      );
       return;
     }
 
@@ -127,6 +129,10 @@ export default function Home() {
           returnDuration={1.5}
         />
       </div>
+      <div
+        className="pointer-events-none absolute inset-0 z-[30] bg-[#F3F8F8]/20 backdrop-blur-[10px]"
+        aria-hidden
+      />
 
       <div className="relative z-40 mx-auto flex h-dvh w-full max-w-5xl flex-col items-center justify-start px-6 pb-10 pt-16 sm:pt-20">
         <motion.div
@@ -140,14 +146,12 @@ export default function Home() {
             Visual node program
           </div>
           <h1 className="mt-6 text-5xl font-light tracking-[-0.04em] text-[#628C79] sm:text-6xl">
-            Visual
-            <br />
             Thinking
             <br />
             Machine
           </h1>
           <p className="mt-4 text-sm text-[#628C79] sm:text-base">
-            Transform ideas into visual thinking flow for teams.
+            A collaborative reasoning workspace for teams.
           </p>
         </motion.div>
 
