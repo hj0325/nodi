@@ -340,8 +340,17 @@ export default function RightAgentDrawer({
                       ) : null}
 
                       {activeSuggestion ? (
-                        <div className={`rounded-[14px] border ${categoryColors.border} ${categoryColors.tint} px-3 py-3`}>
-                          <div className="flex flex-wrap items-center gap-1.5">
+                        <div
+                          className={`rounded-[14px] border ${categoryColors.border} ${categoryColors.tint} px-3`}
+                          style={{ paddingTop: 11, paddingBottom: 17 }}
+                        >
+                          <div
+                            className="font-heading line-clamp-1 text-xs font-semibold text-slate-800"
+                            style={{ position: "relative", left: 3 }}
+                          >
+                            {activeSuggestion.title}
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
                             {[
                               ["reasoning", activeSuggestionTags.reasoning],
                               ["lens", activeSuggestionTags.lens],
@@ -354,12 +363,6 @@ export default function RightAgentDrawer({
                                 </span>
                               );
                             })}
-                          </div>
-                          <div
-                            className="font-heading line-clamp-1 text-xs font-semibold text-slate-800"
-                            style={{ position: "relative", top: 6, left: 3, marginTop: 4 }}
-                          >
-                            {activeSuggestion.title}
                           </div>
                         </div>
                       ) : null}
