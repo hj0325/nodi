@@ -138,35 +138,32 @@ export default function ThinkingNode({ data = {} }) {
       {/* Outer Container (Frame 1410167816) */}
       <div className="flex h-full w-full flex-col items-start gap-2">
         
-        {/* Capsule / Pill (Frame 1410167809) */}
+        {/* Capsule / Pill (Frame 1410167809) - Rendered horizontally directly to prevent squishing and rotation layout issues */}
         <div
-          className="flex flex-row items-start rounded-[30.0831px] border border-white bg-white/61 shadow-sm backdrop-blur-[4px]"
+          className="flex flex-row items-center rounded-[30.0831px] border border-white bg-white/61 shadow-sm backdrop-blur-[4px]"
           style={{
             boxSizing: "border-box",
-            padding: "3.37255px 2.52941px 21.9216px",
+            padding: "2.52941px 21.9216px 2.52941px 2.52941px",
             gap: "8.43px",
-            width: "22.76px",
-            height: "43px",
-            transform: "rotate(-90deg)",
-            transformOrigin: "center",
+            width: "43px",
+            height: "22.76px",
           }}
         >
           {/* Ellipse 173 */}
           <div
-            className="rounded-full"
+            className="rounded-full flex-shrink-0"
             style={{
               width: "17.71px",
               height: "17.71px",
               backgroundColor: "#62B8AA",
               boxShadow: "inset -0.843137px -1.68627px 3.20392px rgba(98, 98, 98, 0.25), inset 0px 3.37255px 2.52941px rgba(255, 255, 255, 0.26)",
-              transform: "rotate(-90deg)",
             }}
           />
         </div>
 
         {/* Main Card (Frame 1410167804) */}
         <div
-          className="flex flex-col items-start gap-2.5 rounded-[12.2695px] shadow-[0.562363px_0.562363px_11.2473px_0.631499px_rgba(171,171,171,0.3)] backdrop-blur-[10px] transition-all duration-300 hover:shadow-[0.562363px_0.562363px_16px_1px_rgba(171,171,171,0.4)]"
+          className="flex flex-col items-start gap-2.5 rounded-[18px] shadow-[0.562363px_0.562363px_11.2473px_0.631499px_rgba(171,171,171,0.3)] backdrop-blur-[10px] transition-all duration-300 hover:shadow-[0.562363px_0.562363px_16px_1px_rgba(171,171,171,0.4)]"
           style={{
             width: "257px",
             minHeight: "165px",
@@ -181,7 +178,7 @@ export default function ThinkingNode({ data = {} }) {
             <div className="relative flex w-full h-6 flex-row items-center justify-center">
               {/* Category Label (e.g. Why, What, Who) - Centered */}
               <span
-                className="font-bold text-center"
+                className="font-semibold text-center"
                 style={{
                   fontFamily: "'Pretendard Variable', sans-serif",
                   fontSize: "11px",
@@ -222,7 +219,7 @@ export default function ThinkingNode({ data = {} }) {
             <div
               className="flex w-full flex-col gap-2 bg-white"
               style={{
-                borderRadius: "11.9483px",
+                borderRadius: "14px",
                 padding: "9px 12px",
                 minHeight: "112.35px",
               }}
@@ -231,7 +228,7 @@ export default function ThinkingNode({ data = {} }) {
               <div className="flex flex-col gap-[5px]">
                 {/* Title */}
                 <div
-                  className="line-clamp-1 font-bold"
+                  className="line-clamp-1 font-semibold"
                   style={{
                     fontFamily: "'Pretendard Variable', sans-serif",
                     fontSize: "12px",
@@ -243,7 +240,7 @@ export default function ThinkingNode({ data = {} }) {
                 </div>
                 {/* Content */}
                 <div
-                  className="line-clamp-2 font-medium"
+                  className="line-clamp-2 font-normal"
                   style={{
                     fontFamily: "'Pretendard Variable', sans-serif",
                     fontSize: "10px",

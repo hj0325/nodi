@@ -302,37 +302,6 @@ export default function RightAgentDrawer({
                   >
                     <div className="flex flex-col gap-3 pb-2">
                       
-                      {/* Node Detail Card (when a node is selected) */}
-                      {selectedNode && (
-                        <NodeDetailCard
-                          selectedNode={selectedNode}
-                          linkedNodes={linkedNodes}
-                          currentUserRole={currentUserRole}
-                          modeLabel={modeLabel}
-                          quickActions={selectedNodeQuickActions}
-                          onPromote={onPromoteSelectedNode}
-                          onDemote={onDemoteSelectedNode}
-                          onShare={() => onSetNodeVisibility?.(selectedNode?.id, "shared")}
-                          onSetVisibility={(nextVisibility) => onSetNodeVisibility?.(selectedNode?.id, nextVisibility)}
-                          onClearSelection={onClearSelectedNode}
-                        />
-                      )}
-
-                      {selectedNode && alignmentSummary && (
-                        <AlignmentSummaryCard selectedNode={selectedNode} summary={alignmentSummary} />
-                      )}
-
-                      {/* Candidate Graph Card (when suggestion is selected and pending commit) */}
-                      {candidateGraph && (
-                        <CandidateGraphCard
-                          candidateGraph={candidateGraph}
-                          candidateHint={candidateHint}
-                          onCommit={onCommitCandidateNodes}
-                          onCommitAsPrivate={onCommitCandidateNodesAsPrivate}
-                          onDiscard={onDiscardCandidateNodes}
-                        />
-                      )}
-
                       {/* Unified Timeline / Alerts & Suggestions */}
                       <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-1.5 border-b border-dashed border-slate-200 pb-2">

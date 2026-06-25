@@ -2,22 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
-  Folder,
-  FileText,
-  Calendar,
+  Home,
   Lightbulb,
   Search,
   MessageSquare,
   Zap,
-  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 const TOPBAR_TEXT_STYLE = {
-  fontFamily: '"Pretendard Variable", "Instrument Sans", sans-serif',
-  lineHeight: "110%",
-  letterSpacing: "-0.32px",
+  fontFamily: '"Pretendard Variable", sans-serif',
+  lineHeight: "180%",
+  letterSpacing: "normal",
 };
 
 export default function TopBar({
@@ -49,117 +46,407 @@ export default function TopBar({
     return `${month}.${date} 회의록`;
   })();
 
-  // Default avatars as shown in the second image
-  const defaultAvatars = [
-    { label: "T", name: "TaeEun", bg: "bg-teal-400 text-teal-900" },
-    { label: "H", name: "HyeonJi", bg: "bg-pink-400 text-pink-900" },
-    { label: "J", name: "JaeWon", bg: "bg-sky-400 text-sky-900" },
-    { label: "S", name: "SangHun", bg: "bg-purple-400 text-purple-900" },
-  ];
-
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-[60] px-6 py-4">
-      <div className="flex items-center justify-between w-full">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-[60] px-[42px] pt-[25px]">
+      <div className="flex flex-col items-start gap-3 w-full">
         
-        {/* Left: Project Breadcrumb & Date Button */}
-        <div className="pointer-events-auto flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200/60 bg-white/80 px-3.5 py-2 shadow-sm backdrop-blur-md">
-            <Folder className="h-4 w-4 text-[#7BA592]" />
-            <div className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-600" style={TOPBAR_TEXT_STYLE}>
-              <Link href={projectMetaHref} className="transition hover:text-slate-900">
-                {projectMetaLabel}
-              </Link>
-              <ChevronRight className="h-3 w-3 text-slate-400" />
-              <div className="min-w-0 max-w-[150px]">
-                {isEditingTitle ? (
-                  <input
-                    value={draftTitle}
-                    onChange={(event) => setDraftTitle(event.target.value)}
-                    onBlur={commitTitle}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        commitTitle();
-                      }
-                      if (event.key === "Escape") {
-                        setDraftTitle(projectTitle || "Untitled Project");
-                        setIsEditingTitle(false);
-                      }
-                    }}
-                    autoFocus
-                    className="w-full border-none bg-transparent p-0 text-[13px] font-bold text-slate-800 outline-none shadow-none"
-                    style={TOPBAR_TEXT_STYLE}
-                    aria-label="Project title"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingTitle(true)}
-                    className="w-full truncate text-left text-[13px] font-bold text-slate-700 transition hover:text-slate-900"
-                    style={TOPBAR_TEXT_STYLE}
-                    title="Rename project"
-                  >
-                    {projectTitle || "Untitled Project"}
-                  </button>
-                )}
+        {/* Main Top Bar Row (3-Column Responsive Layout) */}
+        <div className="flex flex-row items-center w-full h-[42px]">
+          
+          {/* Left Column: Project Breadcrumb (Frame 1410167881) */}
+          <div className="flex-1 flex justify-start">
+            <div
+              className="pointer-events-auto flex flex-row items-center"
+              style={{
+                width: "302.02px",
+                height: "30px",
+                gap: "13px",
+              }}
+            >
+              {/* Home Icon (3dR2lv / Group / Vector) */}
+              <div
+                style={{
+                  width: "20.02px",
+                  height: "17.52px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Home className="h-[17.52px] w-[20.02px] text-[#404045]" />
+              </div>
+
+              {/* Project workspace / Title Text */}
+              <div
+                className="flex items-center text-[16.4297px] font-medium text-[#404045]"
+                style={{
+                  ...TOPBAR_TEXT_STYLE,
+                  width: "269px",
+                  height: "30px",
+                }}
+              >
+                <Link href={projectMetaHref} className="transition hover:text-slate-900">
+                  {projectMetaLabel}
+                </Link>
+                <span className="mx-1.5 text-slate-400">/</span>
+                <div className="min-w-0 flex-1">
+                  {isEditingTitle ? (
+                    <input
+                      value={draftTitle}
+                      onChange={(event) => setDraftTitle(event.target.value)}
+                      onBlur={commitTitle}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          commitTitle();
+                        }
+                        if (event.key === "Escape") {
+                          setDraftTitle(projectTitle || "Untitled Project");
+                          setIsEditingTitle(false);
+                        }
+                      }}
+                      autoFocus
+                      className="w-full border-none bg-transparent p-0 text-[16.4297px] font-medium text-[#404045] outline-none shadow-none"
+                      style={TOPBAR_TEXT_STYLE}
+                      aria-label="Project title"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingTitle(true)}
+                      className="w-full truncate text-left text-[16.4297px] font-medium text-[#404045] transition hover:text-slate-900"
+                      style={TOPBAR_TEXT_STYLE}
+                      title="Rename project"
+                    >
+                      {projectTitle || "Untitled Project"}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Date Button */}
-          <button
-            type="button"
-            className="flex items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-white/80 px-3.5 py-2 text-[12.5px] font-bold text-slate-600 shadow-sm backdrop-blur-md transition hover:bg-white"
-          >
-            <FileText className="h-4 w-4 text-[#7BA592]" />
-            <span>{currentDateLabel}</span>
-          </button>
-        </div>
+          {/* Center Column: Actions Panel (Frame 1410167788) */}
+          <div className="flex justify-center">
+            <div
+              className="pointer-events-auto flex flex-col items-start"
+              style={{
+                width: "268px",
+                height: "42px",
+                background: "rgba(255, 255, 255, 0.64)",
+                border: "1px solid #FFFFFF",
+                borderRadius: "35px",
+                padding: "5px 8px",
+                gap: "10px",
+              }}
+            >
+              {/* Frame 1410167808 (Relative container to place dashed line behind buttons) */}
+              <div className="relative w-[252px] h-[32px] isolation-isolate">
+                
+                {/* Dashed Line (Frame 1410167807) */}
+                <div
+                  className="absolute left-[16px] right-[16px] top-1/2 h-0 border-t border-dashed border-[#C4CED1] -translate-y-1/2 z-0"
+                  style={{ width: "182px" }}
+                />
 
-        {/* Center: Quick Action Icons */}
-        <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-slate-200/60 bg-white/80 p-1 shadow-sm backdrop-blur-md">
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
-            title="AI 제안"
-          >
-            <Lightbulb className="h-4.5 w-4.5" />
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
-            title="검색 및 확대"
-          >
-            <Search className="h-4.5 w-4.5" />
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
-            title="메시지"
-          >
-            <MessageSquare className="h-4.5 w-4.5" />
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
-            title="퀵 액션"
-          >
-            <Zap className="h-4.5 w-4.5" />
-          </button>
-        </div>
+                {/* Buttons Container (Frame 1410167806) */}
+                <div
+                  className="absolute inset-0 flex flex-row items-center z-10"
+                  style={{
+                    width: "252px",
+                    height: "32px",
+                    gap: "23px",
+                  }}
+                >
+                  {/* Frame 82 (Idea Active Button) */}
+                  <button
+                    type="button"
+                    className="flex items-center justify-center text-white transition-transform active:scale-95"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background: "#62B8AA",
+                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
+                      borderRadius: "761.143px",
+                    }}
+                    title="AI 제안"
+                  >
+                    <Lightbulb className="h-[18px] w-[18px]" />
+                  </button>
 
-        {/* Right: Team Member Avatars */}
-        <div className="pointer-events-auto flex items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur-md">
-          <div className="flex -space-x-1.5 overflow-hidden">
-            {defaultAvatars.map((avatar) => (
-              <div
-                key={avatar.label}
-                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold shadow-sm ${avatar.bg}`}
-                title={avatar.name}
-              >
-                {avatar.label}
+                  {/* Frame 83 */}
+                  <button
+                    type="button"
+                    className="flex items-center justify-center text-white transition-transform active:scale-95"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background: "#CCE9E7",
+                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
+                      borderRadius: "761.143px",
+                    }}
+                    title="검색 및 확대"
+                  >
+                    <Search className="h-[18px] w-[18px]" />
+                  </button>
+
+                  {/* Frame 84 */}
+                  <button
+                    type="button"
+                    className="flex items-center justify-center text-white transition-transform active:scale-95"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background: "#CCE9E7",
+                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
+                      borderRadius: "761.143px",
+                    }}
+                    title="메시지 추가"
+                  >
+                    <MessageSquare className="h-[18px] w-[18px]" />
+                  </button>
+
+                  {/* Frame 85 */}
+                  <button
+                    type="button"
+                    className="flex items-center justify-center text-white transition-transform active:scale-95"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background: "#CCE9E7",
+                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
+                      borderRadius: "761.143px",
+                    }}
+                    title="검토 완료"
+                  >
+                    <MessageSquare className="h-[18px] w-[18px]" />
+                  </button>
+
+                  {/* Frame 86 */}
+                  <button
+                    type="button"
+                    className="flex items-center justify-center text-white transition-transform active:scale-95"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background: "#CCE9E7",
+                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
+                      borderRadius: "761.143px",
+                    }}
+                    title="퀵 액션"
+                  >
+                    <Zap className="h-[18px] w-[18px]" />
+                  </button>
+                </div>
               </div>
-            ))}
+            </div>
+          </div>
+
+          {/* Right Column: Members Panel (Frame 1410167793) */}
+          <div className="flex-1 flex justify-end">
+            <div
+              className="pointer-events-auto flex flex-row items-center"
+              style={{
+                width: "198px",
+                height: "42px",
+                gap: "6px",
+              }}
+            >
+              {/* Frame 1410167786 (Active Speaker / TaeEun) */}
+              <div
+                className="relative flex flex-col items-start"
+                style={{
+                  boxSizing: "border-box",
+                  width: "65px",
+                  height: "42px",
+                  background: "rgba(255, 255, 255, 0.64)",
+                  border: "1px solid #FFFFFF",
+                  boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
+                  borderRadius: "35px",
+                  padding: "4px 11px",
+                  gap: "10px",
+                }}
+              >
+                {/* Frame 1410167781 (Active Speaker Circle - T) */}
+                <div
+                  className="absolute flex items-center justify-center text-white"
+                  style={{
+                    width: "31px",
+                    height: "31px",
+                    left: "11px",
+                    top: "6px",
+                    background: "#A2E1E4",
+                    boxShadow: "0px 0px 17.8px rgba(194, 255, 169, 0.8)",
+                    borderRadius: "15.5px",
+                  }}
+                >
+                  <span className="text-[15px] font-normal leading-[18px]">T</span>
+                </div>
+
+                {/* Frame 1410167792 (Voice/Audio Indicator) */}
+                <div
+                  className="absolute flex flex-row items-start"
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    left: "36px",
+                    top: "4px",
+                    background: "#EBFFA3",
+                    borderRadius: "9px",
+                    padding: "3.13px 3.91px",
+                    gap: "7.83px",
+                  }}
+                >
+                  {/* Frame 1410167791 (Equalizer Bars) */}
+                  <div className="flex flex-row items-center gap-[1.57px]" style={{ width: "10.17px", height: "11.74px" }}>
+                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2.35px", height: "7.04px" }} />
+                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2.35px", height: "11.74px" }} />
+                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2.35px", height: "5.48px" }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Frame 1410167785 (Other Team Members List) */}
+              <div
+                className="relative"
+                style={{
+                  boxSizing: "border-box",
+                  width: "127px",
+                  height: "42px",
+                  background: "rgba(255, 255, 255, 0.64)",
+                  border: "1px solid #FFFFFF",
+                  boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
+                  borderRadius: "35px",
+                }}
+              >
+                {/* Frame 1410167783 (Hyeonji - Pink) */}
+                <div
+                  className="absolute flex items-center justify-center text-white border border-white"
+                  style={{
+                    width: "31px",
+                    height: "31px",
+                    left: "8px",
+                    top: "5px",
+                    background: "#FFA6E9",
+                    borderRadius: "15.5px",
+                  }}
+                >
+                  <span className="text-[15px] font-normal leading-[18px]">H</span>
+                </div>
+
+                {/* Frame 1410167782 (Jimin - Blue) */}
+                <div
+                  className="absolute flex items-center justify-center text-white border border-white"
+                  style={{
+                    width: "31px",
+                    height: "31px",
+                    left: "34px",
+                    top: "5px",
+                    background: "#99B8E0",
+                    borderRadius: "15.5px",
+                  }}
+                >
+                  <span className="text-[15px] font-normal leading-[18px]">J</span>
+                </div>
+
+                {/* Frame 1410167780 (Sooyun - Dark Blue) */}
+                <div
+                  className="absolute flex items-center justify-center text-white border border-white"
+                  style={{
+                    width: "31px",
+                    height: "31px",
+                    left: "60px",
+                    top: "5px",
+                    background: "#2C3E81",
+                    borderRadius: "15.5px",
+                  }}
+                >
+                  <span className="text-[15px] font-normal leading-[18px]">S</span>
+                </div>
+
+                {/* Chevron Down (Dropdown Arrow) */}
+                <div
+                  className="absolute flex items-center justify-center"
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    left: "95px",
+                    top: "9px",
+                  }}
+                >
+                  <ChevronDown className="h-4 w-4 text-[#C5C5C5]" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Date Row: Date Button / Minutes Pill (Frame 1410167776) */}
+        <div className="flex flex-row items-center justify-start w-full">
+          <div
+            className="pointer-events-auto flex flex-col items-start"
+            style={{
+              width: "123px",
+              height: "37px",
+              background: "rgba(255, 255, 255, 0.69)",
+              boxShadow: "3.02016px 3.02016px 6.04032px 0.604032px rgba(0, 0, 0, 0.05)",
+              borderRadius: "13px",
+              padding: "11px 13px",
+              gap: "10px",
+              marginTop: "4px",
+            }}
+          >
+            {/* Frame 1410167857 */}
+            <div
+              className="flex flex-row items-center"
+              style={{
+                width: "95px",
+                height: "15px",
+                gap: "12px",
+              }}
+            >
+              {/* Date Text */}
+              <span
+                className="font-medium text-slate-500"
+                style={{
+                  fontFamily: '"Pretendard Variable", sans-serif',
+                  fontSize: "12px",
+                  lineHeight: "126%",
+                  color: "#667081",
+                  width: "67px",
+                  height: "15px",
+                }}
+              >
+                {currentDateLabel}
+              </span>
+
+              {/* Document Icon (Group 1410167618) */}
+              <div
+                className="relative"
+                style={{
+                  width: "16.49px",
+                  height: "14.21px",
+                }}
+              >
+                <div
+                  className="absolute border border-[#667081]"
+                  style={{
+                    width: "16.49px",
+                    height: "14.21px",
+                    borderRadius: "2.84px",
+                  }}
+                />
+                <div
+                  className="absolute border-r border-[#667081] bg-[#667081]/15"
+                  style={{
+                    width: "6.82px",
+                    height: "14.21px",
+                    borderRadius: "2.84px 0px 0px 2.84px",
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
