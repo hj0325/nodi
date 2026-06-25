@@ -25,10 +25,7 @@ export function useThinkingGraphState({ nodes, edges, selectedNodeId, canvasMode
     const visibleIds = new Set();
 
     const isThinkingNodeVisible = (node) => {
-      const visibility = normalizeVisibility(node?.data?.visibility);
-      const ownerId = normalizeOwnerId(node?.data?.ownerId);
-      if (canvasMode === "personal") return ownerId === currentUserId && PERSONAL_VISIBILITY.has(visibility);
-      return TEAM_VISIBILITY.has(visibility);
+      return true;
     };
 
     nodes.forEach((node) => {
@@ -42,7 +39,7 @@ export function useThinkingGraphState({ nodes, edges, selectedNodeId, canvasMode
         return;
       }
 
-      if (canvasMode === "personal" && (node.type === "postitDraft" || node.type === "imageDraft")) {
+      if (node.type === "postitDraft" || node.type === "imageDraft") {
         visibleIds.add(node.id);
         if (node.parentNode) visibleIds.add(node.parentNode);
         return;

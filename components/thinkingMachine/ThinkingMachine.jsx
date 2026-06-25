@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Play, Square } from "lucide-react";
 import {
     useNodesState,
     useEdgesState,
@@ -8,7 +9,6 @@ import {
 } from "reactflow";
 import { AnimatePresence, motion } from "framer-motion";
 import NodeMap from "./NodeMap";
-import LeftTeamContextPanel from "./LeftTeamContextPanel";
 import RightAgentDrawer from "./RightAgentDrawer";
 import TopBar from "./TopBar";
 import { getNodeSnapshot, getRelatedNodeIds } from "@/components/thinkingMachine/utils/graphSnapshots";
@@ -17,7 +17,6 @@ import { toReactFlowNode } from "@/lib/thinkingMachine/reactflowTransforms";
 import { computeNodeBounds, relayoutTopLevelThinkingNodes, shiftClusterRightOfExisting } from "@/lib/thinkingMachine/graphMerge";
 import { useAdminMode } from "@/hooks/useAdminMode";
 import { useDraftGrouping } from "@/components/thinkingMachine/hooks/useDraftGrouping";
-import { useGhostDragToChat } from "@/components/thinkingMachine/hooks/useGhostDragToChat";
 import { useThinkingCollaboration } from "@/components/thinkingMachine/hooks/useThinkingCollaboration";
 import { useThinkingGraphState } from "@/components/thinkingMachine/hooks/useThinkingGraphState";
 import { useThinkingAiAnalyze } from "@/components/thinkingMachine/hooks/useThinkingAiAnalyze";
@@ -70,9 +69,10 @@ export default function ThinkingMachine({
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
     const [drawerMode, setDrawerMode] = useState("tip");
-    const [stage, setStage] = useState("research-diverge");
+    const [stage, setStage] = useState("Idea");
+    const [meetingState, setMeetingState] = useState("active"); // "active" or "ended"
     const [projectTitle, setProjectTitle] = useState(initialProjectTitle);
-    const [canvasMode, setCanvasMode] = useState("personal");
+    const [canvasMode, setCanvasMode] = useState("team");
     const [inputMode, setInputMode] = useState("workspace");
     const [isCanvasInteractive, setIsCanvasInteractive] = useState(true);
     const [selectedNodeId, setSelectedNodeId] = useState(null);
@@ -93,6 +93,10 @@ export default function ThinkingMachine({
     const [meetingMemory, setMeetingMemory] = useState(() => getDefaultMeetingMemory());
     const [meetingCaptureSummary, setMeetingCaptureSummary] = useState(null);
     const [isMeetingCaptureLoading, setIsMeetingCaptureLoading] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+    const [sttTranscript, setSttTranscript] = useState("");
+    const [interimTranscript, setInterimTranscript] = useState("");
+    const [meetingSeconds, setMeetingSeconds] = useState(0);
     const [meetingSessionIdValue] = useState(() => `meeting-${Date.now()}`);
     const meetingSessionIdRef = useRef(meetingSessionIdValue);
     const lastSavedGraphRef = useRef("");
@@ -232,24 +236,14 @@ export default function ThinkingMachine({
         currentUserName,
     });
 
-    const {
-        isChatDropActive,
-        ghostDrag,
-        chatButtonRef,
-        chatDropZoneRef,
-        filteredOnNodesChange,
-        handleNodeDragStart,
-        handleNodeDragUpdate,
-        handleNodeDragStop,
-    } = useGhostDragToChat({
-        nodes,
-        setNodes,
-        baseOnNodesChange,
-        setAttachedNodes,
-        setActiveSuggestion,
-        setDrawerMode,
-        setIsDrawerOpen,
-    });
+    const isChatDropActive = false;
+    const ghostDrag = null;
+    const chatButtonRef = useRef(null);
+    const chatDropZoneRef = useRef(null);
+    const filteredOnNodesChange = baseOnNodesChange;
+    const handleNodeDragStart = null;
+    const handleNodeDragUpdate = null;
+    const handleNodeDragStop = null;
 
     const {
         projectLastUpdated,
@@ -347,6 +341,75 @@ export default function ThinkingMachine({
             stage: safeStage,
         });
     }, [normalizedStage, recordProjectActivity]);
+
+    const handleMergeNodes = useCallback((sourceId, targetId) => {
+        const nodeA = nodes.find((n) => n.id === sourceId);
+        const nodeB = nodes.find((n) => n.id === targetId);
+        if (!nodeA || !nodeB) return;
+
+        const mergedTitle = `${nodeB.data?.title || "Untitled"} & ${nodeA.data?.title || "Untitled"}`;
+        const mergedContent = `${nodeB.data?.content || ""} (병합됨: ${nodeA.data?.content || ""})`;
+
+        setNodes((prevNodes) =>
+            prevNodes
+                .map((n) => {
+                    if (n.id === targetId) {
+                        return {
+                            ...n,
+                            data: {
+                                ...n.data,
+                                title: mergedTitle,
+                                content: mergedContent,
+                            },
+                        };
+                    }
+                    return n;
+                })
+                .filter((n) => n.id !== sourceId)
+        );
+
+        setEdges((prevEdges) =>
+            prevEdges
+                .map((e) => {
+                    let nextEdge = { ...e };
+                    if (e.source === sourceId) nextEdge.source = targetId;
+                    if (e.target === sourceId) nextEdge.target = targetId;
+                    return nextEdge;
+                })
+                .filter((e) => e.source !== e.target)
+        );
+
+        void recordProjectActivity("nodes_merged", {
+            nodeTitle: mergedTitle,
+            nodeType: nodeB.data?.category || "Idea",
+            metadata: {
+                reason: "User merged contextually redundant nodes",
+                sourceNodeId: sourceId,
+                targetNodeId: targetId,
+            },
+        });
+    }, [nodes, setNodes, setEdges, recordProjectActivity]);
+
+    const handleLinkNodes = useCallback((sourceId, targetId) => {
+        const rawEdge = {
+            id: `e-link-${sourceId}-${targetId}`,
+            source: sourceId,
+            target: targetId,
+            label: "refines",
+        };
+        const nextConnectorEdges = toConnectorEdges([rawEdge], nodes, edges);
+        setEdges((prev) => [...prev, ...nextConnectorEdges]);
+
+        void recordProjectActivity("nodes_linked", {
+            nodeTitle: nodes.find((n) => n.id === targetId)?.data?.title || "Linked nodes",
+            nodeType: "Link",
+            metadata: {
+                reason: "User accepted AI link suggestion",
+                sourceNodeId: sourceId,
+                targetNodeId: targetId,
+            },
+        });
+    }, [nodes, edges, setEdges, recordProjectActivity]);
 
     const {
         handleAddNodesFromChat,
@@ -694,6 +757,7 @@ export default function ThinkingMachine({
         setIsAnalyzing,
         currentUserId,
         currentUserName,
+        meetingState,
     });
     const handleInputModeChange = useCallback((nextMode) => {
         setInputMode(nextMode);
@@ -726,6 +790,106 @@ export default function ThinkingMachine({
         animateViewportToNodes,
         recordProjectActivity,
     });
+
+    const recognitionRef = useRef(null);
+    const silenceTimeoutRef = useRef(null);
+    const transcriptBufferRef = useRef("");
+
+    useEffect(() => {
+        let timerId;
+        if (meetingState === "active") {
+            timerId = setInterval(() => {
+                setMeetingSeconds((prev) => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(timerId);
+    }, [meetingState]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        const rec = new SpeechRecognition();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = "ko-KR";
+
+        rec.onresult = (event) => {
+            let interim = "";
+            let final = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    final += event.results[i][0].transcript;
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+
+            if (final) {
+                transcriptBufferRef.current = (transcriptBufferRef.current + " " + final).trim();
+                setSttTranscript(transcriptBufferRef.current);
+            }
+            setInterimTranscript(interim);
+
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+            }
+
+            silenceTimeoutRef.current = setTimeout(() => {
+                const textToSubmit = transcriptBufferRef.current.trim();
+                if (textToSubmit) {
+                    console.log("Auto-submitting STT transcript due to silence:", textToSubmit);
+                    void handleMeetingCaptureSubmit(textToSubmit);
+                    transcriptBufferRef.current = "";
+                    setSttTranscript("");
+                    setInterimTranscript("");
+                }
+            }, 2500);
+        };
+
+        rec.onend = () => {
+            if (isListening) {
+                try {
+                    rec.start();
+                } catch (e) {
+                    console.error("Failed to restart speech recognition:", e);
+                }
+            }
+        };
+
+        rec.onerror = (e) => {
+            console.error("Speech recognition error:", e);
+        };
+
+        recognitionRef.current = rec;
+
+        return () => {
+            if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+            rec.stop();
+        };
+    }, [isListening, handleMeetingCaptureSubmit]);
+
+    useEffect(() => {
+        if (!recognitionRef.current) return;
+        if (isListening) {
+            try {
+                recognitionRef.current.start();
+            } catch (e) {
+                console.error("Failed to start speech recognition:", e);
+            }
+        } else {
+            recognitionRef.current.stop();
+            if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+            const textToSubmit = transcriptBufferRef.current.trim();
+            if (textToSubmit) {
+                void handleMeetingCaptureSubmit(textToSubmit);
+                transcriptBufferRef.current = "";
+                setSttTranscript("");
+                setInterimTranscript("");
+            }
+        }
+    }, [isListening, handleMeetingCaptureSubmit]);
 
     // 우측 Drawer 하단 입력창 동작:
     // - 기본(컨텍스트 없음)일 때: 사용자 입력을 기반으로 /api/analyze 를 호출해 새 노드 + 제안 생성
@@ -898,60 +1062,14 @@ export default function ThinkingMachine({
                 THINKING MACHINE
             </div>
             <TopBar
-                stage={normalizedStage}
-                onStageChange={handleStageChange}
                 projectTitle={projectTitle}
                 onProjectTitleChange={setProjectTitle}
                 projectMetaHref={projectMetaHref}
                 projectMetaLabel="Project workspace"
-                canvasMode={canvasMode}
-                onCanvasModeChange={setCanvasMode}
-                drawerMode={drawerMode}
-                onDrawerModeChange={handleDrawerModeChange}
-                isDrawerOpen={isDrawerOpen}
+                teamMembers={teamMembers}
             />
 
-            <header className="absolute top-0 left-0 right-0 z-50 p-6 flex justify-end items-center bg-transparent pointer-events-none">
-                <div className="flex gap-2 pointer-events-auto">
-                    {isAdminMode && (
-                        <div className="flex items-center gap-2 rounded-2xl border border-white/70 bg-white/76 px-3 py-2 text-xs text-slate-700 shadow-lg backdrop-blur-md">
-                            <span className="rounded-full bg-slate-800/90 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white">
-                                Admin Mode
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-indigo-800">
-                                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                                Autonomous Agent Active
-                            </span>
-                            <span className="text-slate-400">|</span>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${currentRoleMeta.className}`}>
-                                {currentRoleMeta.label}
-                            </span>
-                            <span>Nodes {canvasNodes.length}</span>
-                            <span>Suggestions {suggestions.length}</span>
-                        </div>
-                    )}
-                </div>
-            </header>
-
             <main className="flex-1 w-full h-full relative">
-                <LeftTeamContextPanel
-                    isOpen={isTeamContextPanelOpen}
-                    teamMembers={teamMembers}
-                    activityItems={filteredTeamActivity}
-                    selectedMemberId={selectedTeamMemberId}
-                    selectedActivityId={selectedActivityEventId}
-                    summary={teamContextSummary}
-                    isSummaryLoading={isTeamContextLoading}
-                    summaryError={teamContextError}
-                    meetingMemoryReadout={meetingMemoryReadout}
-                    isMeetingMemoryLoading={isMeetingCaptureLoading}
-                    currentUserId={currentUserId}
-                    onToggle={handleToggleTeamContextPanel}
-                    onSelectMember={handleSelectTeamMember}
-                    onSelectActivity={handleSelectActivity}
-                    onExplainContext={handleExplainTeamContext}
-                    onFocusNode={(nodeId) => focusNodesByIds([nodeId])}
-                />
                 {!hasThinkingGraph ? (
                     <div className="tm-canvas-bg h-full w-full" data-stage={stage}>
                         <div className="absolute inset-0 z-[5]" />
@@ -1022,7 +1140,6 @@ export default function ThinkingMachine({
                     {isDrawerOpen ? (
                         <RightAgentDrawer
                             isOpen={isDrawerOpen}
-                            mode={drawerMode}
                             stage={normalizedStage}
                             suggestions={unseenSuggestions}
                             onStageChange={handleStageChange}
@@ -1032,25 +1149,21 @@ export default function ThinkingMachine({
                             candidateGraph={pendingCandidatePreview}
                             alignmentSummary={alignmentSummary}
                             currentUserRole={effectiveCurrentUserRole}
-                            projectLastUpdated={projectLastUpdated}
-                            activityLog={activityLog}
-                            lastRefreshedAt={lastRefreshedAt}
-                            chatMessages={chatMessages}
-                            chatInput={chatInput}
-                            isChatLoading={isAnalyzing || isChatLoading}
-                            isChatConverting={isChatConverting}
-                            inputMode={inputMode}
-                            onInputModeChange={handleInputModeChange}
-                            meetingCaptureSummary={meetingCaptureSummary}
-                            isMeetingCaptureLoading={isMeetingCaptureLoading}
-                            onChatInputChange={(value) => {
-                                if (String(value || "").trim().length > 0) {
-                                    setHasStartedInput(true);
-                                }
-                                setChatInput(value);
+                            isListening={isListening}
+                            onToggleListening={() => setIsListening(!isListening)}
+                            sttTranscript={sttTranscript}
+                            interimTranscript={interimTranscript}
+                            meetingSeconds={meetingSeconds}
+                            meetingState={meetingState}
+                            onToggleMeetingState={() => setMeetingState(meetingState === "active" ? "ended" : "active")}
+                            currentDirection={meetingMemory?.executive?.currentDirection || ""}
+                            onDismissSuggestion={(id) => {
+                                setDismissedSuggestionIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.add(id);
+                                    return next;
+                                });
                             }}
-                            onChatSubmit={handleRightDrawerSubmit}
-                            onChatConvertToNodes={handleDrawerChatConvertToNodes}
                             onCommitCandidateNodes={handleCommitCandidateNodes}
                             onCommitCandidateNodesAsPrivate={handleCommitCandidateNodesAsPrivate}
                             onDiscardCandidateNodes={handleDiscardCandidateNodes}
@@ -1061,16 +1174,13 @@ export default function ThinkingMachine({
                             modeLabel={reasoningModeProfile.label}
                             candidateHint={reasoningModeProfile.candidateHint}
                             selectedNodeQuickActions={reasoningModeProfile.selectedNodeActions}
-                            uiLanguage="en"
-                            canvasMode={canvasMode}
-                            onCanvasModeChange={setCanvasMode}
-                            chatButtonRef={chatButtonRef}
-                            chatDropZoneRef={chatDropZoneRef}
-                            isChatDropActive={isChatDropActive}
                             onClearSelectedNode={handleClearSelectedNode}
                             onAddPostit={createPostitDraft}
                             onAddImage={createImageDraft}
-                            showDrawerHint={!hasStartedInput && !nodes.some((node) => node?.type === "thinkingNode")}
+                            nodes={nodes}
+                            edges={edges}
+                            onMergeNodes={handleMergeNodes}
+                            onLinkNodes={handleLinkNodes}
                         />
                     ) : null}
                 </AnimatePresence>

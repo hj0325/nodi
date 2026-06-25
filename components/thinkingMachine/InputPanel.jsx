@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CornerDownRight, Lightbulb, Send, Sparkles } from "lucide-react";
+import { CornerDownRight, Lightbulb, Send, Sparkles, Mic, MicOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { getTypeMeta } from "@/lib/thinkingMachine/nodeMeta";
 
@@ -61,6 +61,65 @@ export default function InputPanel({
   selectedNodePromptText,
 }) {
   const [text, setText] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const rec = new SpeechRecognition();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = "ko-KR";
+
+        rec.onresult = (event) => {
+          let interimTranscript = "";
+          let finalTranscript = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          if (finalTranscript) {
+            setText((prev) => (prev ? prev + " " + finalTranscript : finalTranscript));
+          }
+        };
+
+        rec.onend = () => {
+          setIsListening(false);
+        };
+
+        rec.onerror = (e) => {
+          console.error("Speech recognition error:", e);
+          setIsListening(false);
+        };
+
+        recognitionRef.current = rec;
+      }
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("이 브라우저에서는 음성 인식을 지원하지 않습니다. Chrome을 사용해 주세요.");
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (err) {
+        console.error("Failed to start speech recognition:", err);
+      }
+    }
+  };
+
   const [preferredType, setPreferredType] = useState(
     Array.isArray(suggestedTypes) && suggestedTypes[0] ? suggestedTypes[0] : ""
   );
@@ -202,18 +261,37 @@ export default function InputPanel({
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={!text.trim() || isAnalyzing}
-                className="translate-x-[4.5px] inline-flex h-[31.06px] w-[30.49px] shrink-0 items-center justify-center rounded-[8.08px] bg-[linear-gradient(142.46deg,_#7FD1DB_13.82%,_#788DBC_66.77%,_#586789_119.72%)] text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label="Send thought"
-              >
-                {isAnalyzing ? (
-                  <Sparkles className="h-[16.94px] w-[16.38px] animate-spin" strokeWidth={0.830635} />
-                ) : (
-                  <Send className="h-[16.94px] w-[16.38px]" strokeWidth={0.830635} />
-                )}
-              </button>
+              <div className="flex gap-1.5 items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  className={`inline-flex h-[31.06px] w-[30.49px] shrink-0 items-center justify-center rounded-[8.08px] transition hover:scale-[1.02] ${
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                  aria-label={isListening ? "Stop listening" : "Start listening"}
+                >
+                  {isListening ? (
+                    <MicOff className="h-4 w-4" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={!text.trim() || isAnalyzing}
+                  className="translate-x-[4.5px] inline-flex h-[31.06px] w-[30.49px] shrink-0 items-center justify-center rounded-[8.08px] bg-[linear-gradient(142.46deg,_#7FD1DB_13.82%,_#788DBC_66.77%,_#586789_119.72%)] text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Send thought"
+                >
+                  {isAnalyzing ? (
+                    <Sparkles className="h-[16.94px] w-[16.38px] animate-spin" strokeWidth={0.830635} />
+                  ) : (
+                    <Send className="h-[16.94px] w-[16.38px]" strokeWidth={0.830635} />
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>

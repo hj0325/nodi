@@ -91,8 +91,8 @@ export default function NodeMap({
                 className="reactflow-canvas-pan tm-canvas-flow z-10"
                 minZoom={0.2}
                 maxZoom={1}
-                nodesDraggable={isCanvasInteractive}
-                nodesConnectable={isCanvasInteractive}
+                nodesDraggable={false}
+                nodesConnectable={false}
                 elementsSelectable={isCanvasInteractive}
                 zoomOnScroll={isCanvasInteractive}
                 zoomOnPinch={isCanvasInteractive}

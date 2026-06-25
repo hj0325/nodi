@@ -19,7 +19,7 @@ export default async function handler(req, res) {
         graph: {
           nodes: [],
           edges: [],
-          stage: "research-diverge",
+          stage: "Idea",
           updatedAt: timestamp,
         },
         meetingMemory: {

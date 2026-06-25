@@ -1,38 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowUp, GitBranch, Image as ImageIcon, Loader2, Sparkles, StickyNote } from "lucide-react";
 import {
-  getSuggestionTagMeta,
+  Mic,
+  MicOff,
+  Play,
+  Pause,
+  Check,
+  X,
+  Sparkles,
+  StickyNote,
+  Image as ImageIcon,
+  AlertCircle,
+  GitMerge,
+  HelpCircle,
+  ChevronRight,
+} from "lucide-react";
+import {
   getTypeMeta,
   normalizeReasoningStage,
   normalizeNodeData,
-  normalizeSuggestionTags,
 } from "@/lib/thinkingMachine/nodeMeta";
 import NodeDetailCard from "@/components/thinkingMachine/cards/NodeDetailCard";
 import CandidateGraphCard from "@/components/thinkingMachine/cards/CandidateGraphCard";
 import AlignmentSummaryCard from "@/components/thinkingMachine/cards/AlignmentSummaryCard";
-import DrawerSuggestionCarousel from "@/components/thinkingMachine/drawer/DrawerSuggestionCarousel";
-import DrawerMeetingCaptureSection from "@/components/thinkingMachine/drawer/DrawerMeetingCaptureSection";
-import DrawerChatTranscript from "@/components/thinkingMachine/drawer/DrawerChatTranscript";
-import { getRightDrawerCopy } from "@/components/thinkingMachine/drawer/rightDrawerCopy";
-
-function MicButtonIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-[18px] w-[18px]">
-      <rect x="9" y="3.5" width="6" height="10" rx="3" fill="currentColor" />
-      <path
-        d="M6.5 10.5C6.5 13.5376 8.96243 16 12 16C15.0376 16 17.5 13.5376 17.5 10.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path d="M12 16V20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M8.5 20H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { getAiRecommendations } from "@/lib/thinkingMachine/recommendations";
 
 function parseStage(stage) {
   const value = normalizeReasoningStage(stage);
@@ -46,9 +39,8 @@ function parseStage(stage) {
 
 export default function RightAgentDrawer({
   isOpen,
-  mode,
-  stage = "research-diverge",
-  suggestions,
+  stage = "Idea",
+  suggestions = [],
   onStageChange,
   activeSuggestion,
   selectedNode,
@@ -56,17 +48,15 @@ export default function RightAgentDrawer({
   candidateGraph,
   alignmentSummary,
   currentUserRole = "owner",
-  chatMessages,
-  chatInput,
-  isChatLoading,
-  isChatConverting,
-  onChatInputChange,
-  onChatSubmit,
-  onChatConvertToNodes,
-  inputMode = "workspace",
-  onInputModeChange,
-  meetingCaptureSummary,
-  isMeetingCaptureLoading = false,
+  isListening = false,
+  onToggleListening,
+  sttTranscript = "",
+  interimTranscript = "",
+  meetingSeconds = 0,
+  meetingState = "active",
+  onToggleMeetingState,
+  currentDirection = "",
+  onDismissSuggestion,
   onCommitCandidateNodes,
   onCommitCandidateNodesAsPrivate,
   onDiscardCandidateNodes,
@@ -77,462 +67,352 @@ export default function RightAgentDrawer({
   modeLabel,
   candidateHint,
   selectedNodeQuickActions,
-  uiLanguage = "en",
-  canvasMode = "personal",
-  onCanvasModeChange,
-  chatButtonRef,
-  chatDropZoneRef,
-  isChatDropActive,
   onClearSelectedNode,
   onAddPostit,
   onAddImage,
-  showDrawerHint = true,
+  nodes = [],
+  edges = [],
+  onMergeNodes,
+  onLinkNodes,
 }) {
-  const isTip = mode === "tip";
-  const isChat = mode === "chat";
-  const isMeetingCapture = inputMode === "meeting";
   const { mode: thinkingMode, flow: thinkingFlow } = parseStage(stage);
-  const suggestionItems = Array.isArray(suggestions) ? suggestions : [];
-  const shouldShowContextPanel = suggestionItems.length > 0;
-  const activeMeta = normalizeNodeData(activeSuggestion || {});
-  const categoryColors = getTypeMeta(activeMeta.category);
-  const activeSuggestionTags = normalizeSuggestionTags(activeSuggestion?.suggestionTags || activeSuggestion?.tags, activeMeta);
-  const drawerFieldBaseFade =
-    "linear-gradient(169.55deg, rgba(199, 251, 201, 0.3) 9.44%, rgba(179, 236, 236, 0.3) 97.4%)";
-  const drawerFieldRadialAlpha = "none";
-  const drawerFieldLemonStrip = "none";
-  const drawerFieldEdgeOverlay = "none";
-  const chatBottomRef = useRef(null);
-  const contextScrollRef = useRef(null);
-  const panelScrollRef = useRef(null);
-  const [loadingOverlayText, setLoadingOverlayText] = useState("");
-  const [isLoadingOverlayExiting, setIsLoadingOverlayExiting] = useState(false);
-  const [canScrollSuggestionsLeft, setCanScrollSuggestionsLeft] = useState(false);
-  const [canScrollSuggestionsRight, setCanScrollSuggestionsRight] = useState(false);
-  const shouldShowDrawerHint = showDrawerHint && !selectedNode;
-  const copy = getRightDrawerCopy(uiLanguage);
+  const recommendations = getAiRecommendations(nodes, edges);
+  const [dismissedAlertIds, setDismissedAlertIds] = useState(new Set());
 
-  useEffect(() => {
-    if (!isOpen || !isChat) return;
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, isChatLoading, isOpen, isChat]);
-
-  useEffect(() => {
-    contextScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    panelScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [mode, activeSuggestion?.id]);
-
-  useEffect(() => {
-    const el = contextScrollRef.current;
-    if (!el) return;
-
-    const updateScrollButtons = () => {
-      const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-      setCanScrollSuggestionsLeft(el.scrollLeft > 6);
-      setCanScrollSuggestionsRight(el.scrollLeft < maxScrollLeft - 6);
-    };
-
-    updateScrollButtons();
-    el.addEventListener("scroll", updateScrollButtons, { passive: true });
-    window.addEventListener("resize", updateScrollButtons);
-    return () => {
-      el.removeEventListener("scroll", updateScrollButtons);
-      window.removeEventListener("resize", updateScrollButtons);
-    };
-  }, [suggestionItems.length]);
-
-  useEffect(() => {
-    if (!isChatLoading && loadingOverlayText) {
-      const exitStartTimer = window.setTimeout(() => {
-        setIsLoadingOverlayExiting(true);
-      }, 0);
-      const exitTimer = window.setTimeout(() => {
-        setLoadingOverlayText("");
-        setIsLoadingOverlayExiting(false);
-      }, 240);
-
-      return () => {
-        window.clearTimeout(exitStartTimer);
-        window.clearTimeout(exitTimer);
-      };
-    }
-  }, [isChatLoading, loadingOverlayText]);
-
-  const handleChatSubmit = (event) => {
-    event.preventDefault();
-    const submittedText = String(chatInput || "").trim();
-    if (submittedText && !isChatLoading) {
-      setLoadingOverlayText(submittedText);
-      setIsLoadingOverlayExiting(false);
-    }
-    onChatSubmit?.();
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleSuggestionScroll = (direction) => {
-    const el = contextScrollRef.current;
-    if (!el) return;
-    const delta = Math.max(168, Math.floor(el.clientWidth * 0.72));
-    el.scrollBy({
-      left: direction === "left" ? -delta : delta,
-      behavior: "smooth",
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, "0");
+    const date = d.getDate().toString().padStart(2, "0");
+    return `${y}.${m}.${date}`;
+  }, []);
+
+  // Unify all alerts, suggestions, and recommendations into a single timeline
+  const timelineItems = useMemo(() => {
+    const items = [];
+
+    // 1. 연관 노드 상기 (Link Suggestion)
+    // "지금 발화하는 내용이 이전 노드와 연관이 있다고 판단될 때 상기시켜준다."
+    recommendations.linkSuggestions.forEach((rec) => {
+      if (dismissedAlertIds.has(rec.id)) return;
+      items.push({
+        id: rec.id,
+        type: "link",
+        header: todayStr,
+        title: `"${rec.targetTitle}" 노드와 관련이 있습니다.`,
+        description: "논의를 연결하실래요?",
+        tags: ["Discussion", "Memory", "UX"],
+        color: "border-indigo-100 bg-indigo-50/40 text-indigo-700",
+        icon: <Sparkles className="h-3.5 w-3.5 text-indigo-500" />,
+        onAccept: () => {
+          onLinkNodes?.(rec.sourceId, rec.targetId);
+          setDismissedAlertIds((prev) => {
+            const next = new Set(prev);
+            next.add(rec.id);
+            return next;
+          });
+        },
+        onDiscard: () => {
+          setDismissedAlertIds((prev) => {
+            const next = new Set(prev);
+            next.add(rec.id);
+            return next;
+          });
+        },
+      });
     });
-  };
+
+    // 2. 직군별 검토 알림 (Role-based Review)
+    // "노드에서 각 직군(디자이너, 기획자, 개발자)이 검토가 필요한 아이디어일 때 검토하라고 알려준다."
+    recommendations.roleAlerts.forEach((alert) => {
+      if (dismissedAlertIds.has(alert.id)) return;
+      const isDev = alert.role === "Developer";
+      const isDesign = alert.role === "Designer";
+      const colorClass = isDev
+        ? "border-amber-100 bg-amber-50/40 text-amber-700"
+        : isDesign
+        ? "border-pink-100 bg-pink-50/40 text-pink-700"
+        : "border-blue-100 bg-blue-50/40 text-blue-700";
+
+      items.push({
+        id: alert.id,
+        type: "role",
+        header: alert.title,
+        title: `"${alert.nodeTitle}" 노드가 ${alert.role === "Developer" ? "개발" : alert.role === "Designer" ? "디자인" : "기획"} 관점 검토가 필요합니다!`,
+        description: alert.reason.split("! ")[1] || alert.reason,
+        tags: isDev ? ["Developer", "Review"] : isDesign ? ["Designer", "Review"] : ["PM", "Review"],
+        color: colorClass,
+        icon: <HelpCircle className="h-3.5 w-3.5 text-slate-500" />,
+        onAccept: () => {
+          setDismissedAlertIds((prev) => {
+            const next = new Set(prev);
+            next.add(alert.id);
+            return next;
+          });
+        },
+        onDiscard: () => {
+          setDismissedAlertIds((prev) => {
+            const next = new Set(prev);
+            next.add(alert.id);
+            return next;
+          });
+        },
+      });
+    });
+
+    // 3. 약한 부분 디벨롭 필요 상기 (Develop/Supplement Alert)
+    // "노드에서 약한 부분이 있을 때 디벨롭이 필요하다고 상기시켜준다."
+    recommendations.supplementAlerts.forEach((alert) => {
+      if (dismissedAlertIds.has(alert.id)) return;
+      items.push({
+        id: alert.id,
+        type: "supplement",
+        header: alert.title,
+        title: `"${alert.nodeTitle}" 노드가 검증이 필요합니다!`,
+        description: alert.advice.split("! ")[1] || alert.advice,
+        tags: alert.tags || ["Research", "Validation"],
+        color: "border-rose-100 bg-rose-50/40 text-rose-700",
+        icon: <AlertCircle className="h-3.5 w-3.5 text-rose-500" />,
+        onAccept: () => {
+          setDismissedAlertIds((prev) => {
+            const next = new Set(prev);
+            next.add(alert.id);
+            return next;
+          });
+        },
+        onDiscard: () => {
+          setDismissedAlertIds((prev) => {
+            const next = new Set(prev);
+            next.add(alert.id);
+            return next;
+          });
+        },
+      });
+    });
+
+    return items;
+  }, [recommendations, dismissedAlertIds, todayStr, onLinkNodes]);
 
   return (
     <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-[45] overflow-visible">
       <div className="relative flex h-full w-[365px] transform-gpu sm:w-[385px] lg:w-[397px]">
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 z-[0] w-[96px]"
-          aria-hidden
-          style={{ background: drawerFieldLemonStrip }}
-        />
         <motion.div
-          ref={chatDropZoneRef}
-          className={`relative h-full w-[365px] overflow-hidden rounded-none pointer-events-auto opacity-100 sm:w-[385px] lg:w-[397px] ${
-            isChat && isChatDropActive ? "ring-4 ring-teal-300/40" : ""
-          }`}
-          aria-hidden={false}
+          className="relative h-full w-full overflow-hidden rounded-none pointer-events-auto opacity-100 shadow-[-10px_0_30px_rgba(0,0,0,0.04)]"
           initial={{ x: 44, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 44, opacity: 0 }}
           transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            background: `${drawerFieldRadialAlpha}, ${drawerFieldBaseFade}`,
+            background: "linear-gradient(169.55deg, rgba(239, 248, 245, 0.95) 9.44%, rgba(229, 243, 243, 0.95) 97.4%)",
+            backdropBlur: "18px",
           }}
         >
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-16"
-            aria-hidden
-            style={{ background: drawerFieldEdgeOverlay }}
-          />
-          <div
-            className={`pointer-events-none absolute inset-x-8 top-[62px] z-[11] flex justify-center transition-all duration-300 ${
-              shouldShowDrawerHint ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"
-            }`}
-            aria-hidden={!shouldShowDrawerHint}
-          >
-              <div
-                className="origin-top-center scale-[0.46] sm:scale-[0.485] lg:scale-[0.505]"
-                style={{
-                  width: "520px",
-                  height: "58px",
-                }}
-              >
-                <div
-                  className="flex h-[58px] w-[520px] items-center gap-[7px] rounded-[30px] pl-[14px] pr-[19px]"
-                  style={{
-                    background: "#FFFFFF",
-                    opacity: 0.85,
-                    boxShadow: "0px 1px 10px rgba(33, 97, 5, 0.08)",
-                  }}
-                >
-                  <div className="flex translate-x-[6px] items-center gap-[7px]">
-                    <Sparkles className="h-[36px] w-[34px] shrink-0 text-[#FD9A00]" strokeWidth={1.8} />
-                    <div
-                      className="whitespace-nowrap"
-                      style={{
-                        width: "432px",
-                        height: "34px",
-                        fontFamily: '"Pretendard Variable", "Instrument Sans", sans-serif',
-                        fontStyle: "normal",
-                        fontWeight: 600,
-                        fontSize: "18.8905px",
-                        lineHeight: "180%",
-                        color: "#758E71",
-                      }}
-                    >
-                      Start with a thought, or select a node to extend it.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           <div className="relative z-10 flex h-full min-h-0 flex-col px-5 pb-4 pt-4">
-            <div className="mb-2 flex justify-end pr-1">
-              <div className="flex items-center gap-2">
-                <div className="pointer-events-auto inline-flex items-center rounded-[14px] border border-white/80 bg-white/72 p-[2px] shadow-[0_7px_18px_rgba(76,108,90,0.10)] backdrop-blur-[14px]">
-                  <button
-                    type="button"
-                    onClick={() => onInputModeChange?.("workspace")}
-                    className={`inline-flex h-6 min-w-[74px] items-center justify-center rounded-[12px] px-2.5 text-[10px] font-semibold transition ${
-                      !isMeetingCapture
-                        ? "bg-[#6F8A7B] text-white shadow-[0_3px_8px_rgba(123,165,146,0.20)]"
-                        : "text-[#839083]"
-                    }`}
-                  >
-                    {copy.workspaceInputTab}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onInputModeChange?.("meeting")}
-                    className={`inline-flex h-6 min-w-[68px] items-center justify-center rounded-[12px] px-2.5 text-[10px] font-semibold transition ${
-                      isMeetingCapture
-                        ? "bg-[#6F8A7B] text-white shadow-[0_3px_8px_rgba(123,165,146,0.20)]"
-                        : "text-[#839083]"
-                    }`}
-                  >
-                    {copy.meetingTab}
-                  </button>
+            
+            {/* 1. Top Topic Status Card */}
+            <div className="mb-4">
+              <div className="rounded-2xl border border-[#D0E5DF] bg-white/85 p-3.5 shadow-[0_4px_16px_rgba(123,165,146,0.06)] backdrop-blur-md">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-[#7BA592] animate-pulse" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#558A72]">Current Topic</span>
+                  </div>
+                  <span className="text-[9px] font-semibold text-slate-400">Close</span>
                 </div>
-                <div className="pointer-events-auto inline-flex items-center rounded-[14px] border border-white/80 bg-white/72 p-[2px] shadow-[0_7px_18px_rgba(76,108,90,0.10)] backdrop-blur-[14px]">
-                <button
-                  type="button"
-                  onClick={() => onCanvasModeChange?.("personal")}
-                  className={`inline-flex h-6 min-w-[62px] items-center justify-center rounded-[12px] px-2.5 text-[10px] font-semibold transition ${
-                    canvasMode === "personal"
-                      ? "bg-[#7BA592] text-white shadow-[0_3px_8px_rgba(123,165,146,0.20)]"
-                      : "text-[#839083]"
-                  }`}
-                >
-                  Personal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onCanvasModeChange?.("team")}
-                  className={`inline-flex h-6 min-w-[50px] items-center justify-center rounded-[12px] px-2.5 text-[10px] font-semibold transition ${
-                    canvasMode === "team"
-                      ? "bg-[#7BA592] text-white shadow-[0_3px_8px_rgba(123,165,146,0.20)]"
-                      : "text-[#A2ABA1]"
-                  }`}
-                >
-                  Team
-                </button>
-                </div>
+                <p className="mt-2 text-[12.5px] font-semibold leading-relaxed text-slate-700">
+                  {currentDirection || "AI가 실시간으로 회의 내용을 분석하여 중심 주제를 파악하고 있습니다."}
+                </p>
               </div>
             </div>
 
-            {shouldShowContextPanel ? (
-              <DrawerSuggestionCarousel
-                suggestionItems={suggestionItems}
-                activeSuggestion={activeSuggestion}
-                contextScrollRef={contextScrollRef}
-                canScrollSuggestionsLeft={canScrollSuggestionsLeft}
-                canScrollSuggestionsRight={canScrollSuggestionsRight}
-                onSuggestionScroll={handleSuggestionScroll}
-                onChatContextSelect={onChatContextSelect}
-              />
-            ) : null}
+            {/* 2. Central Meeting Controller */}
+            <div className="mb-4 rounded-2xl border border-white/70 bg-white/50 p-4 shadow-sm backdrop-blur-md">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Meeting Duration</span>
+                  <span className="text-2xl font-bold tracking-tight text-slate-700 font-mono mt-0.5">
+                    {formatTime(meetingSeconds)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  {/* Mic Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={onToggleListening}
+                    className={`relative inline-flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-95 ${
+                      isListening
+                        ? "border-emerald-200 bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                        : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+                    }`}
+                    title={isListening ? "음성 인식 중지" : "음성 인식 시작"}
+                  >
+                    {isListening ? (
+                      <>
+                        <span className="absolute inset-0 rounded-full bg-emerald-500 opacity-25 animate-ping" />
+                        <Mic className="h-5 w-5" />
+                      </>
+                    ) : (
+                      <MicOff className="h-5 w-5" />
+                    )}
+                  </button>
 
+                  {/* Pause/Play Button */}
+                  <button
+                    type="button"
+                    onClick={onToggleMeetingState}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 active:scale-95"
+                    title={meetingState === "active" ? "회의 일시정지" : "회의 재개"}
+                  >
+                    {meetingState === "active" ? (
+                      <Pause className="h-4 w-4 fill-slate-600 text-slate-600" />
+                    ) : (
+                      <Play className="h-4 w-4 fill-slate-600 text-slate-600" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Real-time STT Preview Bubble */}
+              {isListening && (sttTranscript || interimTranscript) && (
+                <div className="mt-3.5 rounded-xl bg-emerald-50/60 border border-emerald-100/50 px-3 py-2.5">
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] font-bold text-emerald-600">STT 실시간 인식 중</span>
+                  </div>
+                  <p className="mt-1 text-[11.5px] leading-relaxed text-slate-600 font-medium">
+                    {sttTranscript} <span className="text-emerald-500/80">{interimTranscript}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Main Content Area */}
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-white/70 bg-[rgba(255,255,255,0.34)] px-3.5 pb-3 pt-4 shadow-[0_14px_28px_rgba(88,116,104,0.09)] backdrop-blur-[16px]">
               <div className="min-h-0 flex-1 overflow-hidden text-sm text-slate-700">
                 <div className="flex h-full min-h-0 flex-col">
                   <div
-                    ref={panelScrollRef}
                     className="min-h-0 flex-1 overflow-y-auto px-1"
                     style={{ scrollbarWidth: "none" }}
                   >
                     <div className="flex flex-col gap-3 pb-2">
-                      <NodeDetailCard
-                        selectedNode={selectedNode}
-                        linkedNodes={linkedNodes}
-                        currentUserRole={currentUserRole}
-                        modeLabel={modeLabel}
-                        quickActions={selectedNodeQuickActions}
-                        onPromote={onPromoteSelectedNode}
-                        onDemote={onDemoteSelectedNode}
-                        onShare={() => onSetNodeVisibility?.(selectedNode?.id, "shared")}
-                        onSetVisibility={(nextVisibility) => onSetNodeVisibility?.(selectedNode?.id, nextVisibility)}
-                        onClearSelection={onClearSelectedNode}
-                      />
-                      <AlignmentSummaryCard selectedNode={selectedNode} summary={alignmentSummary} />
-                      {isMeetingCapture ? (
-                        <DrawerMeetingCaptureSection meetingCaptureSummary={meetingCaptureSummary} />
-                      ) : null}
-
-                      {activeSuggestion ? (
-                        <div
-                          className={`rounded-[14px] border ${categoryColors.border} ${categoryColors.tint} px-3`}
-                          style={{ paddingTop: 11, paddingBottom: 17 }}
-                        >
-                          <div
-                            className="font-heading line-clamp-1 text-xs font-semibold text-slate-800"
-                            style={{ position: "relative", left: 3 }}
-                          >
-                            {activeSuggestion.title}
-                          </div>
-                          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                            {[
-                              ["reasoning", activeSuggestionTags.reasoning],
-                              ["lens", activeSuggestionTags.lens],
-                              ["question", activeSuggestionTags.question],
-                            ].map(([axis, value]) => {
-                              const meta = getSuggestionTagMeta(axis, value);
-                              return (
-                                <span key={`${axis}-${value}`} className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}>
-                                  {value}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      <CandidateGraphCard
-                        candidateGraph={candidateGraph}
-                        candidateHint={candidateHint}
-                        onCommit={onCommitCandidateNodes}
-                        onCommitAsPrivate={onCommitCandidateNodesAsPrivate}
-                        onDiscard={onDiscardCandidateNodes}
-                      />
-
-                      <DrawerChatTranscript
-                        chatMessages={chatMessages}
-                        isChatLoading={isChatLoading}
-                        activeSuggestion={activeSuggestion}
-                        chatBottomRef={chatBottomRef}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 pt-3">
-                    <div className="mb-2 flex items-center gap-2 px-1">
-                      <button
-                        type="button"
-                        onClick={onAddPostit}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/78 text-slate-600 shadow-[0_6px_14px_rgba(0,0,0,0.07)] transition hover:bg-white"
-                        aria-label={copy.note}
-                        title={copy.note}
-                      >
-                        <StickyNote className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onAddImage}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/78 text-slate-600 shadow-[0_6px_14px_rgba(0,0,0,0.07)] transition hover:bg-white"
-                        aria-label={copy.image}
-                        title={copy.image}
-                      >
-                        <ImageIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/78 text-slate-600 shadow-[0_6px_14px_rgba(0,0,0,0.07)] transition hover:bg-white"
-                        aria-label={copy.voice}
-                        title={copy.voice}
-                      >
-                        <MicButtonIcon />
-                      </button>
-                    </div>
-
-                    <form onSubmit={handleChatSubmit} className="space-y-2">
-                      <div
-                        ref={chatButtonRef}
-                        className="relative overflow-hidden rounded-[16px] border border-white/85 bg-white/88 px-4 pb-11 pt-3 shadow-[0_8px_18px_rgba(126,154,138,0.10)]"
-                      >
-                        {loadingOverlayText ? (
-                          <div
-                            className={`pointer-events-none absolute inset-x-4 top-3 bottom-12 transition-opacity duration-200 ${
-                              isLoadingOverlayExiting ? "opacity-0" : "opacity-100"
-                            }`}
-                            aria-hidden="true"
-                          >
-                            <div className="drawer-loading-gradient-text h-full w-full overflow-hidden whitespace-pre-wrap break-words text-[13px] font-medium leading-[1.45]">
-                              {loadingOverlayText}
-                            </div>
-                          </div>
-                        ) : null}
-                        <textarea
-                          value={chatInput}
-                          onChange={(event) => onChatInputChange?.(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" && !event.shiftKey) {
-                              event.preventDefault();
-                              handleChatSubmit(event);
-                            }
-                          }}
-                          placeholder={isMeetingCapture ? "Add one meeting turn or note block..." : selectedNode ? "Add a related thought..." : "Add a thought..."}
-                          disabled={isChatLoading || isMeetingCaptureLoading}
-                          rows={2}
-                          className={`min-h-[68px] w-full resize-none border-none bg-transparent pr-11 text-[13px] font-medium leading-[1.45] outline-none ${
-                            loadingOverlayText
-                              ? "text-transparent caret-transparent placeholder:text-transparent"
-                              : "text-slate-700 placeholder:text-[#A4B2C6]"
-                          }`}
+                      
+                      {/* Node Detail Card (when a node is selected) */}
+                      {selectedNode && (
+                        <NodeDetailCard
+                          selectedNode={selectedNode}
+                          linkedNodes={linkedNodes}
+                          currentUserRole={currentUserRole}
+                          modeLabel={modeLabel}
+                          quickActions={selectedNodeQuickActions}
+                          onPromote={onPromoteSelectedNode}
+                          onDemote={onDemoteSelectedNode}
+                          onShare={() => onSetNodeVisibility?.(selectedNode?.id, "shared")}
+                          onSetVisibility={(nextVisibility) => onSetNodeVisibility?.(selectedNode?.id, nextVisibility)}
+                          onClearSelection={onClearSelectedNode}
                         />
-                        <button
-                          type="submit"
-                          disabled={isChatLoading || isMeetingCaptureLoading || !chatInput?.trim()}
-                          className="absolute bottom-3.5 right-3.5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(97,129,95,0.35)] bg-[linear-gradient(136.99deg,rgba(199,255,232,0.28)_-0.49%,rgba(19,158,89,0.24)_142.16%),linear-gradient(0deg,rgba(147,205,186,0.2),rgba(147,205,186,0.2))] shadow-[0_6px_14px_rgba(61,107,79,0.10)] transition disabled:cursor-not-allowed disabled:opacity-50"
-                          aria-label="Send message"
-                        >
-                          <ArrowUp className="h-4 w-4 text-[#5A8054]" strokeWidth={2.1} />
-                        </button>
-                      </div>
-                    </form>
+                      )}
 
-                    {activeSuggestion && chatMessages.length >= 2 && !isMeetingCapture && (
-                      <button
-                        type="button"
-                        onClick={onChatConvertToNodes}
-                        disabled={isChatConverting}
-                        className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-[12px] bg-gradient-to-r from-indigo-500 to-purple-500 px-3 py-2.5 text-xs font-semibold text-white transition hover:from-indigo-600 hover:to-purple-600 disabled:opacity-55"
-                      >
-                        {isChatConverting ? (
-                          <>
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Creating nodes...
-                          </>
+                      {selectedNode && alignmentSummary && (
+                        <AlignmentSummaryCard selectedNode={selectedNode} summary={alignmentSummary} />
+                      )}
+
+                      {/* Candidate Graph Card (when suggestion is selected and pending commit) */}
+                      {candidateGraph && (
+                        <CandidateGraphCard
+                          candidateGraph={candidateGraph}
+                          candidateHint={candidateHint}
+                          onCommit={onCommitCandidateNodes}
+                          onCommitAsPrivate={onCommitCandidateNodesAsPrivate}
+                          onDiscard={onDiscardCandidateNodes}
+                        />
+                      )}
+
+                      {/* Unified Timeline / Alerts & Suggestions */}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-1.5 border-b border-dashed border-slate-200 pb-2">
+                          <Sparkles className="h-4 w-4 text-[#7BA592]" />
+                          <span className="font-bold text-slate-700 text-[13px]">실시간 분석 및 제안 타임라인</span>
+                        </div>
+
+                        {timelineItems.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-slate-200 bg-white/50 p-4 text-center">
+                            <p className="text-[11.5px] text-slate-400">회의를 계속 진행해 주세요.<br />실시간으로 아이디어 제안 및 검토 알림이 생성됩니다.</p>
+                          </div>
                         ) : (
-                          <>
-                            <GitBranch className="h-3 w-3" />
-                            Convert to node candidates
-                          </>
+                          <div className="flex flex-col gap-3">
+                            {timelineItems.map((item) => (
+                              <div
+                                key={item.id}
+                                className={`rounded-[16px] border bg-white/80 p-3.5 shadow-sm transition hover:shadow-md flex flex-col gap-1.5`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex flex-col gap-1">
+                                    <span className={`text-[10px] font-bold ${
+                                      item.type === "link"
+                                        ? "text-slate-400"
+                                        : item.type === "role"
+                                        ? "text-amber-600"
+                                        : "text-rose-600"
+                                    }`}>
+                                      {item.header}
+                                    </span>
+                                    <span className="text-[12px] font-bold text-slate-800 leading-snug">
+                                      {item.title}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={item.onAccept}
+                                      className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm transition"
+                                      title="수락"
+                                    >
+                                      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={item.onDiscard}
+                                      className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-400 transition"
+                                      title="거절"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <p className="text-[11.5px] text-slate-600 leading-relaxed font-medium">
+                                  {item.description}
+                                </p>
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                  {item.tags.map((tag) => (
+                                    <span
+                                      key={tag}
+                                      className="rounded-full bg-slate-100 px-2 py-0.5 text-[9.5px] font-semibold text-slate-500"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </button>
-                    )}
+                      </div>
+
+                    </div>
                   </div>
+
+                  {/* Quick Action Tools (Note, Image) Removed */}
+
                 </div>
               </div>
             </div>
 
-            <div className="mt-2 flex justify-center pb-1 pt-2">
-              <div className="pointer-events-auto inline-flex w-full max-w-[318px] items-center rounded-[16px] border border-white/80 bg-white/74 p-[3px] shadow-[0_8px_18px_rgba(83,108,90,0.09)] backdrop-blur-[14px]">
-                <button
-                  type="button"
-                  onClick={() => onStageChange?.("research-diverge")}
-                  className={`inline-flex h-6 flex-1 items-center justify-center rounded-[12px] px-2 text-[9px] font-semibold transition ${
-                    thinkingMode === "research"
-                      ? "bg-[#EDEDE5] text-[#60656F]"
-                      : "text-[#8A9099]"
-                  }`}
-                >
-                  Research
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onStageChange?.("design-diverge")}
-                  className={`inline-flex h-6 flex-1 items-center justify-center rounded-[12px] px-2 text-[9px] font-semibold transition ${
-                    thinkingMode === "design"
-                      ? "bg-[#F7C8C0] text-[#FFFFFF]"
-                      : "text-[#8A9099]"
-                  }`}
-                >
-                  Design
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onStageChange?.(`${thinkingMode}-diverge`)}
-                  className={`inline-flex h-6 flex-1 items-center justify-center rounded-[12px] px-2 text-[9px] font-semibold transition ${
-                    thinkingFlow === "diverge"
-                      ? "bg-[#7BA592] text-[#FFFFFF]"
-                      : "text-[#8A9099]"
-                  }`}
-                >
-                  Diverge
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onStageChange?.(`${thinkingMode}-converge`)}
-                  className={`inline-flex h-6 flex-1 items-center justify-center rounded-[12px] px-2 text-[9px] font-semibold transition ${
-                    thinkingFlow === "converge"
-                      ? "bg-[#B8C6B5] text-[#FFFFFF]"
-                      : "text-[#8A9099]"
-                  }`}
-                >
-                  Converge
-                </button>
-              </div>
-            </div>
           </div>
         </motion.div>
       </div>

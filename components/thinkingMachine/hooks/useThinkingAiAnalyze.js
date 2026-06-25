@@ -27,6 +27,7 @@ export function useThinkingAiAnalyze({
   setIsAnalyzing,
   currentUserId,
   currentUserName = "You",
+  meetingState = "active",
 }) {
   const handleInputSubmit = useCallback(
     async ({ text, preferredType, selectedNode: inputContextNode } = {}) => {
@@ -60,6 +61,7 @@ export function useThinkingAiAnalyze({
             position: n.position,
           })),
           stage,
+          meetingState,
         };
 
         const data = await analyze(payload);

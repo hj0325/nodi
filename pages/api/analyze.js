@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   if (error) return res.status(500).json({ error });
 
   try {
-    const { text, history, stage } = req.body ?? {};
+    const { text, history, stage, meetingState } = req.body ?? {};
     if (typeof text !== "string" || !text.trim()) {
       return res.status(400).json({ error: "Missing required field: text" });
     }
@@ -29,6 +29,7 @@ export default async function handler(req, res) {
       text,
       history: Array.isArray(history) ? history : [],
       stage,
+      meetingState,
     });
 
     return res.status(200).json(result);

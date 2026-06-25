@@ -296,7 +296,7 @@ export default function ConnectorEdge({
   const lineColor = data?.alignmentStroke || alignmentMeta.stroke || DEFAULT_LINE_COLOR;
   const lineWidth = toFiniteNumber(data?.lineWidth, DEFAULT_LINE_WIDTH);
   const curveTension = toFiniteNumber(data?.curveTension, DEFAULT_CURVE_TENSION);
-  const lineDash = data?.alignmentLineDash || alignmentMeta.lineDash;
+  const lineDash = data?.isContinuation ? "5 5" : (data?.alignmentLineDash || alignmentMeta.lineDash);
 
   // 드래그 중 서브픽셀 변동으로 경로 후보가 바뀌며 라벨·선이 떨리는 것을 줄임
   const sx = Math.round(sourceX);
