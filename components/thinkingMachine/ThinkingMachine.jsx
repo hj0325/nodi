@@ -1133,6 +1133,7 @@ export default function ThinkingMachine({
                     {isDrawerOpen ? (
                         <RightAgentDrawer
                             isOpen={isDrawerOpen}
+                            onClose={() => setIsDrawerOpen(false)}
                             stage={normalizedStage}
                             suggestions={unseenSuggestions}
                             onStageChange={handleStageChange}
