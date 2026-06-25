@@ -47,11 +47,11 @@ export default function TopBar({
   })();
 
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-[60] px-[42px] pt-[25px]">
-      <div className="flex flex-col items-start gap-3 w-full">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-[60] px-[42px] pt-[20px]">
+      <div className="flex flex-col items-start gap-2.5 w-full">
         
         {/* Main Top Bar Row (3-Column Responsive Layout) */}
-        <div className="flex flex-row items-center w-full h-[42px]">
+        <div className="flex flex-row items-center w-full h-[36px]">
           
           {/* Left Column: Project Breadcrumb (Frame 1410167881) */}
           <div className="flex-1 flex justify-start">
@@ -59,30 +59,30 @@ export default function TopBar({
               className="pointer-events-auto flex flex-row items-center"
               style={{
                 width: "302.02px",
-                height: "30px",
-                gap: "13px",
+                height: "26px",
+                gap: "10px",
               }}
             >
               {/* Home Icon (3dR2lv / Group / Vector) */}
               <div
                 style={{
-                  width: "20.02px",
-                  height: "17.52px",
+                  width: "18px",
+                  height: "15px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Home className="h-[17.52px] w-[20.02px] text-[#404045]" />
+                <Home className="h-[15px] w-[18px] text-[#404045]" />
               </div>
 
               {/* Project workspace / Title Text */}
               <div
-                className="flex items-center text-[16.4297px] font-medium text-[#404045]"
+                className="flex items-center text-[14px] font-medium text-[#404045]"
                 style={{
                   ...TOPBAR_TEXT_STYLE,
                   width: "269px",
-                  height: "30px",
+                  height: "26px",
                 }}
               >
                 <Link href={projectMetaHref} className="transition hover:text-slate-900">
@@ -106,7 +106,7 @@ export default function TopBar({
                         }
                       }}
                       autoFocus
-                      className="w-full border-none bg-transparent p-0 text-[16.4297px] font-medium text-[#404045] outline-none shadow-none"
+                      className="w-full border-none bg-transparent p-0 text-[14px] font-medium text-[#404045] outline-none shadow-none"
                       style={TOPBAR_TEXT_STYLE}
                       aria-label="Project title"
                     />
@@ -114,7 +114,7 @@ export default function TopBar({
                     <button
                       type="button"
                       onClick={() => setIsEditingTitle(true)}
-                      className="w-full truncate text-left text-[16.4297px] font-medium text-[#404045] transition hover:text-slate-900"
+                      className="w-full truncate text-left text-[14px] font-medium text-[#404045] transition hover:text-slate-900"
                       style={TOPBAR_TEXT_STYLE}
                       title="Rename project"
                     >
@@ -131,31 +131,31 @@ export default function TopBar({
             <div
               className="pointer-events-auto flex flex-col items-start"
               style={{
-                width: "268px",
-                height: "42px",
+                width: "236px",
+                height: "36px",
                 background: "rgba(255, 255, 255, 0.64)",
                 border: "1px solid #FFFFFF",
                 borderRadius: "35px",
-                padding: "5px 8px",
-                gap: "10px",
+                padding: "4px 6px",
+                gap: "8px",
               }}
             >
               {/* Frame 1410167808 (Relative container to place dashed line behind buttons) */}
-              <div className="relative w-[252px] h-[32px] isolation-isolate">
+              <div className="relative w-[224px] h-[28px] isolation-isolate">
                 
                 {/* Dashed Line (Frame 1410167807) */}
                 <div
-                  className="absolute left-[16px] right-[16px] top-1/2 h-0 border-t border-dashed border-[#C4CED1] -translate-y-1/2 z-0"
-                  style={{ width: "182px" }}
+                  className="absolute left-[14px] right-[14px] top-1/2 h-0 border-t border-dashed border-[#C4CED1] -translate-y-1/2 z-0"
+                  style={{ width: "160px" }}
                 />
 
                 {/* Buttons Container (Frame 1410167806) */}
                 <div
                   className="absolute inset-0 flex flex-row items-center z-10"
                   style={{
-                    width: "252px",
-                    height: "32px",
-                    gap: "23px",
+                    width: "224px",
+                    height: "28px",
+                    gap: "21px",
                   }}
                 >
                   {/* Frame 82 (Idea Active Button) */}
@@ -163,15 +163,15 @@ export default function TopBar({
                     type="button"
                     className="flex items-center justify-center text-white transition-transform active:scale-95"
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "28px",
+                      height: "28px",
                       background: "#62B8AA",
                       boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
                       borderRadius: "761.143px",
                     }}
                     title="AI 제안"
                   >
-                    <Lightbulb className="h-[18px] w-[18px]" />
+                    <Lightbulb className="h-[15px] w-[15px]" />
                   </button>
 
                   {/* Frame 83 */}
@@ -179,15 +179,15 @@ export default function TopBar({
                     type="button"
                     className="flex items-center justify-center text-white transition-transform active:scale-95"
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "28px",
+                      height: "28px",
                       background: "#CCE9E7",
                       boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
                       borderRadius: "761.143px",
                     }}
                     title="검색 및 확대"
                   >
-                    <Search className="h-[18px] w-[18px]" />
+                    <Search className="h-[15px] w-[15px]" />
                   </button>
 
                   {/* Frame 84 */}
@@ -195,15 +195,15 @@ export default function TopBar({
                     type="button"
                     className="flex items-center justify-center text-white transition-transform active:scale-95"
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "28px",
+                      height: "28px",
                       background: "#CCE9E7",
                       boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
                       borderRadius: "761.143px",
                     }}
                     title="메시지 추가"
                   >
-                    <MessageSquare className="h-[18px] w-[18px]" />
+                    <MessageSquare className="h-[15px] w-[15px]" />
                   </button>
 
                   {/* Frame 85 */}
@@ -211,15 +211,15 @@ export default function TopBar({
                     type="button"
                     className="flex items-center justify-center text-white transition-transform active:scale-95"
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "28px",
+                      height: "28px",
                       background: "#CCE9E7",
                       boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
                       borderRadius: "761.143px",
                     }}
                     title="검토 완료"
                   >
-                    <MessageSquare className="h-[18px] w-[18px]" />
+                    <MessageSquare className="h-[15px] w-[15px]" />
                   </button>
 
                   {/* Frame 86 */}
@@ -227,15 +227,15 @@ export default function TopBar({
                     type="button"
                     className="flex items-center justify-center text-white transition-transform active:scale-95"
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "28px",
+                      height: "28px",
                       background: "#CCE9E7",
                       boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
                       borderRadius: "761.143px",
                     }}
                     title="퀵 액션"
                   >
-                    <Zap className="h-[18px] w-[18px]" />
+                    <Zap className="h-[15px] w-[15px]" />
                   </button>
                 </div>
               </div>
@@ -247,9 +247,9 @@ export default function TopBar({
             <div
               className="pointer-events-auto flex flex-row items-center"
               style={{
-                width: "198px",
-                height: "42px",
-                gap: "6px",
+                width: "172px",
+                height: "36px",
+                gap: "5px",
               }}
             >
               {/* Frame 1410167786 (Active Speaker / TaeEun) */}
@@ -257,51 +257,51 @@ export default function TopBar({
                 className="relative flex flex-col items-start"
                 style={{
                   boxSizing: "border-box",
-                  width: "65px",
-                  height: "42px",
+                  width: "56px",
+                  height: "36px",
                   background: "rgba(255, 255, 255, 0.64)",
                   border: "1px solid #FFFFFF",
                   boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
                   borderRadius: "35px",
-                  padding: "4px 11px",
-                  gap: "10px",
+                  padding: "3px 9px",
+                  gap: "8px",
                 }}
               >
                 {/* Frame 1410167781 (Active Speaker Circle - T) */}
                 <div
                   className="absolute flex items-center justify-center text-white"
                   style={{
-                    width: "31px",
-                    height: "31px",
-                    left: "11px",
-                    top: "6px",
+                    width: "26px",
+                    height: "26px",
+                    left: "9px",
+                    top: "4px",
                     background: "#A2E1E4",
                     boxShadow: "0px 0px 17.8px rgba(194, 255, 169, 0.8)",
                     borderRadius: "15.5px",
                   }}
                 >
-                  <span className="text-[15px] font-normal leading-[18px]">T</span>
+                  <span className="text-[13px] font-normal leading-[15px]">T</span>
                 </div>
 
                 {/* Frame 1410167792 (Voice/Audio Indicator) */}
                 <div
                   className="absolute flex flex-row items-start"
                   style={{
-                    width: "18px",
-                    height: "18px",
-                    left: "36px",
-                    top: "4px",
+                    width: "16px",
+                    height: "16px",
+                    left: "31px",
+                    top: "3px",
                     background: "#EBFFA3",
                     borderRadius: "9px",
-                    padding: "3.13px 3.91px",
-                    gap: "7.83px",
+                    padding: "2.5px 3.2px",
+                    gap: "6px",
                   }}
                 >
                   {/* Frame 1410167791 (Equalizer Bars) */}
-                  <div className="flex flex-row items-center gap-[1.57px]" style={{ width: "10.17px", height: "11.74px" }}>
-                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2.35px", height: "7.04px" }} />
-                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2.35px", height: "11.74px" }} />
-                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2.35px", height: "5.48px" }} />
+                  <div className="flex flex-row items-center gap-[1.2px]" style={{ width: "9px", height: "10px" }}>
+                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2px", height: "6px" }} />
+                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2px", height: "10px" }} />
+                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2px", height: "4.5px" }} />
                   </div>
                 </div>
               </div>
@@ -311,8 +311,8 @@ export default function TopBar({
                 className="relative"
                 style={{
                   boxSizing: "border-box",
-                  width: "127px",
-                  height: "42px",
+                  width: "111px",
+                  height: "36px",
                   background: "rgba(255, 255, 255, 0.64)",
                   border: "1px solid #FFFFFF",
                   boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
@@ -323,58 +323,58 @@ export default function TopBar({
                 <div
                   className="absolute flex items-center justify-center text-white border border-white"
                   style={{
-                    width: "31px",
-                    height: "31px",
-                    left: "8px",
-                    top: "5px",
+                    width: "26px",
+                    height: "26px",
+                    left: "7px",
+                    top: "4px",
                     background: "#FFA6E9",
                     borderRadius: "15.5px",
                   }}
                 >
-                  <span className="text-[15px] font-normal leading-[18px]">H</span>
+                  <span className="text-[13px] font-normal leading-[15px]">H</span>
                 </div>
 
                 {/* Frame 1410167782 (Jimin - Blue) */}
                 <div
                   className="absolute flex items-center justify-center text-white border border-white"
                   style={{
-                    width: "31px",
-                    height: "31px",
-                    left: "34px",
-                    top: "5px",
+                    width: "26px",
+                    height: "26px",
+                    left: "29px",
+                    top: "4px",
                     background: "#99B8E0",
                     borderRadius: "15.5px",
                   }}
                 >
-                  <span className="text-[15px] font-normal leading-[18px]">J</span>
+                  <span className="text-[13px] font-normal leading-[15px]">J</span>
                 </div>
 
                 {/* Frame 1410167780 (Sooyun - Dark Blue) */}
                 <div
                   className="absolute flex items-center justify-center text-white border border-white"
                   style={{
-                    width: "31px",
-                    height: "31px",
-                    left: "60px",
-                    top: "5px",
+                    width: "26px",
+                    height: "26px",
+                    left: "51px",
+                    top: "4px",
                     background: "#2C3E81",
                     borderRadius: "15.5px",
                   }}
                 >
-                  <span className="text-[15px] font-normal leading-[18px]">S</span>
+                  <span className="text-[13px] font-normal leading-[15px]">S</span>
                 </div>
 
                 {/* Chevron Down (Dropdown Arrow) */}
                 <div
                   className="absolute flex items-center justify-center"
                   style={{
-                    width: "24px",
-                    height: "24px",
-                    left: "95px",
-                    top: "9px",
+                    width: "20px",
+                    height: "20px",
+                    left: "83px",
+                    top: "7px",
                   }}
                 >
-                  <ChevronDown className="h-4 w-4 text-[#C5C5C5]" />
+                  <ChevronDown className="h-3.5 w-3.5 text-[#C5C5C5]" />
                 </div>
               </div>
             </div>
@@ -387,23 +387,23 @@ export default function TopBar({
           <div
             className="pointer-events-auto flex flex-col items-start"
             style={{
-              width: "123px",
-              height: "37px",
+              width: "112px",
+              height: "32px",
               background: "rgba(255, 255, 255, 0.69)",
               boxShadow: "3.02016px 3.02016px 6.04032px 0.604032px rgba(0, 0, 0, 0.05)",
-              borderRadius: "13px",
-              padding: "11px 13px",
-              gap: "10px",
-              marginTop: "4px",
+              borderRadius: "11px",
+              padding: "8px 11px",
+              gap: "8px",
+              marginTop: "2px",
             }}
           >
             {/* Frame 1410167857 */}
             <div
               className="flex flex-row items-center"
               style={{
-                width: "95px",
+                width: "90px",
                 height: "15px",
-                gap: "12px",
+                gap: "10px",
               }}
             >
               {/* Date Text */}
@@ -411,10 +411,10 @@ export default function TopBar({
                 className="font-medium text-slate-500"
                 style={{
                   fontFamily: '"Pretendard Variable", sans-serif',
-                  fontSize: "12px",
+                  fontSize: "11px",
                   lineHeight: "126%",
                   color: "#667081",
-                  width: "67px",
+                  width: "63px",
                   height: "15px",
                 }}
               >
@@ -425,24 +425,24 @@ export default function TopBar({
               <div
                 className="relative"
                 style={{
-                  width: "16.49px",
-                  height: "14.21px",
+                  width: "14px",
+                  height: "12px",
                 }}
               >
                 <div
                   className="absolute border border-[#667081]"
                   style={{
-                    width: "16.49px",
-                    height: "14.21px",
-                    borderRadius: "2.84px",
+                    width: "14px",
+                    height: "12px",
+                    borderRadius: "2.5px",
                   }}
                 />
                 <div
                   className="absolute border-r border-[#667081] bg-[#667081]/15"
                   style={{
-                    width: "6.82px",
-                    height: "14.21px",
-                    borderRadius: "2.84px 0px 0px 2.84px",
+                    width: "5.8px",
+                    height: "12px",
+                    borderRadius: "2.5px 0px 0px 2.5px",
                   }}
                 />
               </div>
