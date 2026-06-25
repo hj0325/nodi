@@ -22,6 +22,7 @@ export default function ProjectWorkspacePage() {
         let matchedProject = await fetchProject(id);
 
         if (!matchedProject) {
+          console.error("Project not found in store for ID:", id);
           void router.replace("/");
           return;
         }
@@ -44,8 +45,9 @@ export default function ProjectWorkspacePage() {
           setCurrentUser(nextCurrentUser);
           setIsLoading(false);
         });
-      } catch {
-        void router.replace("/");
+      } catch (error) {
+        console.error("Error loading project workspace:", error);
+        setIsLoading(false);
       }
     };
     void run();
