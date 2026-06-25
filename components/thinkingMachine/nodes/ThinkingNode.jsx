@@ -1,11 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Handle, Position } from "reactflow";
 import { getTypeMeta, normalizeNodeCategory, getSourceTypeMeta, normalizeVisibility } from "@/lib/thinkingMachine/nodeMeta";
 import ConflictPopover from "@/components/thinkingMachine/conflicts/ConflictPopover";
 
 const HANDLE_STYLE = {
-  top: 38,
+  top: 113,
   width: 1,
   height: 1,
   border: "none",
@@ -18,41 +19,16 @@ function getPortColor(category) {
   return getTypeMeta(normalizeNodeCategory(category)).color;
 }
 
-function getFiveWhLabelFromData(data = {}) {
-  const category = normalizeNodeCategory(data.category);
-  const koMap = {
-    Who: "누가 (Who)",
-    When: "언제 (When)",
-    Where: "어디서 (Where)",
-    What: "무엇을 (What)",
-    Why: "왜 (Why)",
-    How: "어떻게 (How)",
-  };
-  return koMap[category] || category;
-}
-
 function getPhaseLabelFromData(data = {}) {
   const phase = data.phase || "Idea";
-  const koMap = {
-    Idea: "아이디어",
-    Research: "리서치",
-    Solution: "솔루션",
-    Decision: "결정",
-    Action: "실행",
+  const enMap = {
+    Idea: "Idea",
+    Research: "Research",
+    Solution: "Solution",
+    Decision: "Decision",
+    Action: "Action",
   };
-  return koMap[phase] || phase;
-}
-
-function MetaChip({ label, className, style }) {
-  if (!label) return null;
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9.5px] font-bold leading-none tracking-tight ${className}`}
-      style={style}
-    >
-      {label}
-    </span>
-  );
+  return enMap[phase] || phase;
 }
 
 function AnchorPort({ side, color }) {
@@ -60,7 +36,7 @@ function AnchorPort({ side, color }) {
 
   return (
     <span
-      className={`pointer-events-none absolute ${sideClass} top-[31px] z-[40] flex h-[14px] w-[14px] items-center justify-center rounded-full border border-white/55 bg-white/82 shadow-[0_4px_12px_rgba(15,23,42,0.08)] backdrop-blur-sm`}
+      className={`pointer-events-none absolute ${sideClass} top-[113px] z-[40] flex h-[14px] w-[14px] items-center justify-center rounded-full border border-white/55 bg-white/82 shadow-[0_4px_12px_rgba(15,23,42,0.08)] backdrop-blur-sm`}
       aria-hidden
     >
       <span
@@ -75,46 +51,75 @@ function AnchorPort({ side, color }) {
   );
 }
 
+function getSpeakerMeta(name) {
+  const cleanName = typeof name === "string" ? name.trim() : "";
+  if (!cleanName) {
+    return { initial: "U", bg: "#2E3A59" }; // Default User (Dark Navy)
+  }
+  const firstChar = cleanName.charAt(0).toUpperCase();
+  
+  if (firstChar === "H") {
+    return { initial: "H", bg: "#FFA6E9" }; // Hyeonji (Pink)
+  }
+  if (firstChar === "T") {
+    return { initial: "T", bg: "#62B8AA" }; // TaeEun (Teal)
+  }
+  if (firstChar === "J") {
+    return { initial: "J", bg: "#60A5FA" }; // Jimin / JaeWon (Sky Blue)
+  }
+  if (firstChar === "S") {
+    return { initial: "S", bg: "#A78BFA" }; // Sooyun / SangHun (Purple)
+  }
+  if (cleanName.toLowerCase() === "ai" || cleanName.toLowerCase() === "agent") {
+    return { initial: "AI", bg: "#818CF8" }; // AI (Indigo)
+  }
+  
+  return { initial: firstChar, bg: "#2E3A59" }; // Default (Dark Navy)
+}
+
 export default function ThinkingNode({ data = {} }) {
   const portColor = getPortColor(data.category);
   const hasLeftPort = Boolean(data.hasLeftPort);
   const hasRightPort = Boolean(data.hasRightPort);
 
   const sourceMeta = getSourceTypeMeta(data.sourceType);
-  const fiveWhLabel = getFiveWhLabelFromData(data);
   const phaseLabel = getPhaseLabelFromData(data);
-
-  const titleLower = (data.title || "").toLowerCase();
-  const contentLower = (data.content || "").toLowerCase();
-  const textLower = `${titleLower} ${contentLower}`;
-
-  const devKeywords = /\b(api|db|database|server|code|develop|backend|frontend|performance|data|system|security|scale|infra|hosting|architecture|stack)\b/;
-  const designKeywords = /\b(ui|ux|design|screen|color|layout|button|font|flow|prototype|pixel|css|styled|animation|icon|visual|interaction)\b/;
-  const pmKeywords = /\b(schedule|deadline|milestone|launch|scope|cost|business|feature|prioritize|market|customer|planner|pm|timeline|launch|phase|sprint)\b/;
-
-  const needsDev = devKeywords.test(textLower);
-  const needsDesign = designKeywords.test(textLower);
-  const needsPm = pmKeywords.test(textLower);
 
   // Map visibility to a beautiful status label
   const visibility = normalizeVisibility(data.visibility);
   const visibilityLabel = visibility === "shared" ? "Accepted" : visibility === "reviewed" ? "Reviewed" : visibility === "agreed" ? "Agreed" : "Candidate";
-  const visibilityClass = visibility === "shared"
-    ? "bg-[#E6F4EA] text-[#137333]"
-    : visibility === "reviewed"
-    ? "bg-[#E8F0FE] text-[#1A73E8]"
-    : visibility === "agreed"
-    ? "bg-[#F3E8FF] text-[#6B21A8]"
-    : "bg-[#FEF7E0] text-[#B06000]";
 
   // Map source type to a beautiful meta label
   const sourceLabel = sourceMeta.label === "AI" ? "AI" : sourceMeta.label === "User" ? "User" : "Memory";
-  const sourceClass = sourceMeta.label === "AI"
-    ? "bg-[#F3E8FF] text-[#6B21A8]"
-    : "bg-[#E8F0FE] text-[#1A73E8]";
 
-  // Map phase to a beautiful meta label
-  const phaseClass = "bg-[#FCE7F3] text-[#9D174D]";
+  // Dynamic backgrounds for tags
+  const visibilityBg = visibility === "shared"
+    ? "#D1FFEB"
+    : visibility === "reviewed"
+    ? "#E8F0FE"
+    : visibility === "agreed"
+    ? "#F3E8FF"
+    : "#FEF7E0";
+
+  const sourceBg = sourceMeta.label === "AI"
+    ? "#F3E8FF"
+    : sourceMeta.label === "User"
+    ? "#E8F0FE"
+    : "#EFEBFF";
+
+  const phaseBg = data.phase === "Idea"
+    ? "#FCE7F3"
+    : data.phase === "Research"
+    ? "#E0F8DB"
+    : data.phase === "Solution"
+    ? "#E0F2FE"
+    : data.phase === "Decision"
+    ? "#FEF3C7"
+    : data.phase === "Action"
+    ? "#F5F3FF"
+    : "#FCE7F3"; // fallback
+
+  const speakerMeta = useMemo(() => getSpeakerMeta(data.editedBy), [data.editedBy]);
 
   return (
     <div className="relative h-full w-full">
@@ -129,63 +134,193 @@ export default function ThinkingNode({ data = {} }) {
         onToggle={data.onToggleConflictPopover}
         onExplain={data.onExplainConflict}
       />
-      <div className="flex h-full w-full flex-col">
-        {/* Simple, modern white box style card */}
-        <div className="relative w-full rounded-[24px] border border-slate-200/80 bg-white px-4.5 py-4.5 shadow-[0_12px_36px_rgba(15,23,42,0.06)] hover:shadow-[0_16px_44px_rgba(15,23,42,0.10)] transition-all duration-300">
-          
-          {/* Card Header with circular dot and Korean-English mixed category */}
-          <div className="flex items-center gap-2 mb-3">
-            <span
-              className="h-2.5 w-2.5 rounded-full shadow-sm"
-              style={{ backgroundColor: portColor }}
-            />
-            <span className="text-[11.5px] font-bold text-slate-500 tracking-tight">
-              {fiveWhLabel}
-            </span>
-          </div>
+      
+      {/* Outer Container (Frame 1410167816) */}
+      <div className="flex h-full w-full flex-col items-start gap-2">
+        
+        {/* Capsule / Pill (Frame 1410167809) */}
+        <div
+          className="flex flex-row items-start rounded-[30.0831px] border border-white bg-white/61 shadow-sm backdrop-blur-[4px]"
+          style={{
+            boxSizing: "border-box",
+            padding: "3.37255px 2.52941px 21.9216px",
+            gap: "8.43px",
+            width: "22.76px",
+            height: "43px",
+            transform: "rotate(-90deg)",
+            transformOrigin: "center",
+          }}
+        >
+          {/* Ellipse 173 */}
+          <div
+            className="rounded-full"
+            style={{
+              width: "17.71px",
+              height: "17.71px",
+              backgroundColor: "#62B8AA",
+              boxShadow: "inset -0.843137px -1.68627px 3.20392px rgba(98, 98, 98, 0.25), inset 0px 3.37255px 2.52941px rgba(255, 255, 255, 0.26)",
+              transform: "rotate(-90deg)",
+            }}
+          />
+        </div>
 
-          {/* Card Body */}
-          <div className="flex flex-col">
-            <div
-              className="font-heading line-clamp-2 font-bold tracking-tight text-slate-800"
-              style={{ fontSize: 13.5, lineHeight: 1.3 }}
-            >
-              {data.title || "Untitled node"}
-            </div>
-            <div
-              className="mt-1.5 font-node-body line-clamp-3 text-slate-500 font-medium"
-              style={{ fontSize: 11.5, lineHeight: 1.45 }}
-            >
-              {data.content}
-            </div>
+        {/* Main Card (Frame 1410167804) */}
+        <div
+          className="flex flex-col items-start gap-2.5 rounded-[12.2695px] shadow-[0.562363px_0.562363px_11.2473px_0.631499px_rgba(171,171,171,0.3)] backdrop-blur-[10px] transition-all duration-300 hover:shadow-[0.562363px_0.562363px_16px_1px_rgba(171,171,171,0.4)]"
+          style={{
+            width: "257px",
+            minHeight: "165px",
+            background: "linear-gradient(249.98deg, rgba(179, 236, 236, 0.12) -3.67%, rgba(168, 255, 208, 0.0708) 95.87%)",
+            border: "0.843545px solid #CDE9E9",
+            padding: "10px 14px 12px",
+          }}
+        >
+          {/* Frame 1410167803 */}
+          <div className="flex w-full flex-col gap-[7px]">
+            {/* Frame 1410167802 - Relative container to center category and place speaker on far right */}
+            <div className="relative flex w-full h-6 flex-row items-center justify-center">
+              {/* Category Label (e.g. Why, What, Who) - Centered */}
+              <span
+                className="font-bold text-center"
+                style={{
+                  fontFamily: "'Pretendard Variable', sans-serif",
+                  fontSize: "11px",
+                  lineHeight: "20px",
+                  color: "#2C6068",
+                  width: "43px",
+                  height: "20px",
+                }}
+              >
+                {data.category || "Node"}
+              </span>
 
-            {/* Pastel colored meta tags */}
-            <div className="mt-3.5 flex flex-wrap gap-1.5">
-              <MetaChip label={visibilityLabel} className={visibilityClass} />
-              <MetaChip label={sourceLabel} className={sourceClass} />
-              <MetaChip label={phaseLabel} className={phaseClass} />
-            </div>
-
-            {/* Role-based review badges */}
-            {(needsDev || needsDesign || needsPm) && (
-              <div className="mt-3 pt-2.5 border-t border-dashed border-slate-100 flex flex-wrap gap-1.5">
-                {needsDev && (
-                  <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-700 ring-1 ring-inset ring-amber-600/10">
-                    ⚙️ 개발 검토
-                  </span>
-                )}
-                {needsDesign && (
-                  <span className="inline-flex items-center rounded-md bg-pink-50 px-2 py-0.5 text-[9px] font-bold text-pink-700 ring-1 ring-inset ring-pink-600/10">
-                    🎨 디자인 검토
-                  </span>
-                )}
-                {needsPm && (
-                  <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-700 ring-1 ring-inset ring-blue-600/10">
-                    📋 기획 검토
-                  </span>
-                )}
+              {/* Speaker Initial Circle (Frame 1410167784) - Absolute on far right */}
+              <div
+                className="absolute right-0 flex h-6 w-6 items-center justify-center rounded-full border border-white shadow-[0px_3.09677px_23.2258px_rgba(171,171,171,0.25)]"
+                style={{
+                  backgroundColor: speakerMeta.bg,
+                  width: "24px",
+                  height: "24px",
+                }}
+                title={`Edited by ${data.editedBy || "Unknown"}`}
+              >
+                <span
+                  className="font-normal"
+                  style={{
+                    fontFamily: "'Pretendard Variable', sans-serif",
+                    fontSize: "11.6129px",
+                    lineHeight: "14px",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {speakerMeta.initial}
+                </span>
               </div>
-            )}
+            </div>
+
+            {/* Inner White Box (Frame 1410167758) */}
+            <div
+              className="flex w-full flex-col gap-2 bg-white"
+              style={{
+                borderRadius: "11.9483px",
+                padding: "9px 12px",
+                minHeight: "112.35px",
+              }}
+            >
+              {/* Title and Content Container (Frame 1410167795) */}
+              <div className="flex flex-col gap-[5px]">
+                {/* Title */}
+                <div
+                  className="line-clamp-1 font-bold"
+                  style={{
+                    fontFamily: "'Pretendard Variable', sans-serif",
+                    fontSize: "12px",
+                    lineHeight: "1.3",
+                    color: "#34849C",
+                  }}
+                >
+                  {data.title || "Untitled Node"}
+                </div>
+                {/* Content */}
+                <div
+                  className="line-clamp-2 font-medium"
+                  style={{
+                    fontFamily: "'Pretendard Variable', sans-serif",
+                    fontSize: "10px",
+                    lineHeight: "1.38",
+                    color: "#444859",
+                  }}
+                >
+                  {data.content}
+                </div>
+              </div>
+
+              {/* Tags Container (Frame 1410167796) */}
+              <div className="mt-auto flex flex-row items-center gap-1.5">
+                {/* Tag 1 (Visibility) */}
+                <div
+                  className="flex items-center justify-center rounded-[9.17845px]"
+                  style={{
+                    backgroundColor: visibilityBg,
+                    padding: "2.06px 8px 3.43px",
+                  }}
+                >
+                  <span
+                    className="font-semibold text-center"
+                    style={{
+                      fontFamily: "'Pretendard Variable', sans-serif",
+                      fontSize: "9.17845px",
+                      lineHeight: "1.3",
+                      color: "rgba(93, 107, 110, 0.8)",
+                    }}
+                  >
+                    {visibilityLabel}
+                  </span>
+                </div>
+
+                {/* Tag 2 (Source) */}
+                <div
+                  className="flex items-center justify-center rounded-[9.17845px]"
+                  style={{
+                    backgroundColor: sourceBg,
+                    padding: "2.06px 8px 3.43px",
+                  }}
+                >
+                  <span
+                    className="font-semibold text-center"
+                    style={{
+                      fontFamily: "'Pretendard Variable', sans-serif",
+                      fontSize: "9.17845px",
+                      lineHeight: "1.3",
+                      color: "rgba(93, 107, 110, 0.8)",
+                    }}
+                  >
+                    {sourceLabel}
+                  </span>
+                </div>
+
+                {/* Tag 3 (Phase) */}
+                <div
+                  className="flex items-center justify-center rounded-[9.17845px]"
+                  style={{
+                    backgroundColor: phaseBg,
+                    padding: "2.06px 8px 3.43px",
+                  }}
+                >
+                  <span
+                    className="font-semibold text-center"
+                    style={{
+                      fontFamily: "'Pretendard Variable', sans-serif",
+                      fontSize: "9.17845px",
+                      lineHeight: "1.3",
+                      color: "rgba(93, 107, 110, 0.8)",
+                    }}
+                  >
+                    {phaseLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
