@@ -57,7 +57,7 @@ void main() {
       vec2 warped = s + disp * gain;
       float m1 = length(warped + sin(5.0 * warped.y * uFrequency - 3.0 * t + float(i)) / 4.0);
       float m = mix(m0, m1, kMix);
-      float w = 1.0 - exp(-6.0 / exp(6.0 * m));
+      float w = 1.0 - exp(-4.5 / exp(4.5 * m));
       sumCol += uColors[i] * (w * uColorAlphas[i]);
       cover = max(cover, w * uColorAlphas[i]);
     }
@@ -72,7 +72,7 @@ void main() {
   }
 
   vec3 highlightTint = vec3(214.0 / 255.0, 242.0 / 255.0, 245.0 / 255.0);
-  float highlight = smoothstep(0.72, 0.92, max(max(col.r, col.g), col.b));
+  float highlight = smoothstep(0.82, 0.96, max(max(col.r, col.g), col.b));
   col = mix(col, highlightTint, highlight);
   a = max(a, highlight * 0.72);
 

@@ -98,10 +98,10 @@ export default function Home() {
   };
 
   return (
-    <main className={`relative min-h-screen ${isPortrait ? "overflow-y-auto pb-24" : "overflow-hidden"} bg-[#E8F3F4] text-slate-900 flex flex-col justify-start py-12 px-6`}>
+    <main className={`relative min-h-screen ${isPortrait ? "overflow-y-auto pb-24" : "overflow-hidden"} bg-[#D5E4E6] text-slate-900 flex flex-col justify-start py-12 px-6`}>
       {/* Background elements */}
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[#E8F3F4]" />
-      <div className="pointer-events-none absolute inset-0 z-8 opacity-60">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[#D5E4E6]" />
+      <div className="pointer-events-none absolute inset-0 z-8 opacity-45">
         <ColorBends
           colors={["#6FB1BD", "#FFFFFF", "#358A9C60", "#9BE3EB", "#2B798A40", "#FFFFFF80"]}
           rotation={100}
@@ -129,7 +129,7 @@ export default function Home() {
         />
       </div>
       <div
-        className="pointer-events-none absolute inset-0 z-[30] bg-[#E8F3F4]/15 backdrop-blur-[3px]"
+        className="pointer-events-none absolute inset-0 z-[30] bg-[#D5E4E6]/35 backdrop-blur-[6px]"
         aria-hidden
       />
 
