@@ -138,7 +138,7 @@ export default function Home() {
         className={`${
           isPortrait 
             ? "relative mx-auto flex flex-col items-center justify-start z-40 w-full max-w-[400px] gap-12 mt-8" 
-            : "absolute left-1/2 top-[104px] flex flex-col items-center justify-start z-40 transition-all duration-300 ease-out"
+            : "absolute left-1/2 top-1/2 flex flex-col items-center justify-start z-40 transition-all duration-300 ease-out"
         }`}
         style={
           isPortrait 
@@ -147,8 +147,8 @@ export default function Home() {
                 width: "1128px",
                 height: "610px",
                 gap: "103px",
-                transform: `translate(-50%, 0) scale(${scale})`,
-                transformOrigin: "top center",
+                transform: `translate(-50%, -50%) scale(${scale})`,
+                transformOrigin: "center center",
               }
         }
       >
@@ -237,7 +237,7 @@ export default function Home() {
                 width: "100%",
                 fontFamily: "'Instrument Sans', sans-serif",
                 fontStyle: "normal",
-                fontWeight: "500",
+                fontWeight: "400",
                 fontSize: isPortrait ? "18px" : "22.4px",
                 lineHeight: isPortrait ? "24px" : "27.2px",
                 textAlign: "center",
@@ -450,7 +450,7 @@ export default function Home() {
                               width: "100%",
                               fontFamily: "'Pretendard Variable', sans-serif",
                               fontStyle: "normal",
-                              fontWeight: "600",
+                              fontWeight: "500",
                               fontSize: titleFontSize,
                               lineHeight: titleLineHeight,
                               color: "#0D3040",
@@ -465,7 +465,7 @@ export default function Home() {
                               width: "100%",
                               fontFamily: "'Pretendard Variable', sans-serif",
                               fontStyle: "normal",
-                              fontWeight: "500",
+                              fontWeight: "400",
                               fontSize: subtitleFontSize,
                               lineHeight: subtitleLineHeight,
                               color: "#576E78",
@@ -506,7 +506,7 @@ export default function Home() {
                                   style={{
                                     fontFamily: "'Pretendard Variable', sans-serif",
                                     fontStyle: "normal",
-                                    fontWeight: "500",
+                                    fontWeight: "400",
                                     fontSize: tagFontSize,
                                     lineHeight: tagLineHeight,
                                     color: "#576E78",
@@ -541,7 +541,7 @@ export default function Home() {
                                     style={{
                                       fontFamily: "'Pretendard Variable', sans-serif",
                                       fontStyle: "normal",
-                                      fontWeight: "500",
+                                      fontWeight: "400",
                                       fontSize: tagFontSize,
                                       lineHeight: tagLineHeight,
                                       color: "#576E78",
@@ -570,7 +570,7 @@ export default function Home() {
                         style={{
                           fontFamily: "'Pretendard Variable', sans-serif",
                           fontStyle: "normal",
-                          fontWeight: "500",
+                          fontWeight: "400",
                           fontSize: footerFontSize,
                           lineHeight: footerLineHeight,
                           color: "#757E82",
