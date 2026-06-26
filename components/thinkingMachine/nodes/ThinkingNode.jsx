@@ -90,7 +90,7 @@ export default function ThinkingNode({ data = {} }) {
   const visibilityLabel = visibility === "shared" ? "Accepted" : visibility === "reviewed" ? "Reviewed" : visibility === "agreed" ? "Agreed" : "Candidate";
 
   // Map source type to a beautiful meta label
-  const sourceLabel = sourceMeta.label === "AI" ? "AI" : sourceMeta.label === "User" ? "User" : "Memory";
+  const sourceLabel = sourceMeta.label === "AI" ? "AI" : sourceMeta.label === "User" ? "User" : sourceMeta.label === "Context" ? "Context" : "Memory";
 
   // Dynamic backgrounds for tags
   const visibilityBg = visibility === "shared"
@@ -140,22 +140,29 @@ export default function ThinkingNode({ data = {} }) {
         
         {/* Capsule / Pill (Frame 1410167809) - Rendered horizontally directly to prevent squishing and rotation layout issues */}
         <div
-          className="flex flex-row items-center rounded-[30.0831px] border border-white bg-white/61 shadow-sm backdrop-blur-[4px]"
+          className="flex flex-row items-center rounded-[30.0831px] border border-white shadow-sm backdrop-blur-[4px] transition-all duration-300"
           style={{
             boxSizing: "border-box",
-            padding: "2.52941px 21.9216px 2.52941px 2.52941px",
+            padding: (visibility === "shared" || visibility === "reviewed" || visibility === "agreed")
+              ? "2.52941px 2.52941px 2.52941px 21.9216px"
+              : "2.52941px 21.9216px 2.52941px 2.52941px",
             gap: "8.43px",
             width: "43px",
             height: "22.76px",
+            background: (visibility === "shared" || visibility === "reviewed" || visibility === "agreed")
+              ? "rgba(98, 184, 170, 0.85)"
+              : "rgba(255, 255, 255, 0.61)",
           }}
         >
           {/* Ellipse 173 */}
           <div
-            className="rounded-full flex-shrink-0"
+            className="rounded-full flex-shrink-0 transition-all duration-300"
             style={{
               width: "17.71px",
               height: "17.71px",
-              backgroundColor: "#62B8AA",
+              backgroundColor: (visibility === "shared" || visibility === "reviewed" || visibility === "agreed")
+                ? "#FFFFFF"
+                : "#CBD5E1",
               boxShadow: "inset -0.843137px -1.68627px 3.20392px rgba(98, 98, 98, 0.25), inset 0px 3.37255px 2.52941px rgba(255, 255, 255, 0.26)",
             }}
           />
@@ -253,70 +260,72 @@ export default function ThinkingNode({ data = {} }) {
               </div>
 
               {/* Tags Container (Frame 1410167796) */}
-              <div className="mt-auto flex flex-row items-center gap-1.5">
-                {/* Tag 1 (Visibility) */}
-                <div
-                  className="flex items-center justify-center rounded-[9.17845px]"
-                  style={{
-                    backgroundColor: visibilityBg,
-                    padding: "2.06px 8px 3.43px",
-                  }}
-                >
-                  <span
-                    className="font-semibold text-center"
+              {visibility !== "candidate" && (
+                <div className="mt-auto flex flex-row items-center gap-1.5">
+                  {/* Tag 1 (Visibility) */}
+                  <div
+                    className="flex items-center justify-center rounded-[9.17845px]"
                     style={{
-                      fontFamily: "'Pretendard Variable', sans-serif",
-                      fontSize: "9.17845px",
-                      lineHeight: "1.3",
-                      color: "rgba(93, 107, 110, 0.8)",
+                      backgroundColor: visibilityBg,
+                      padding: "2.06px 8px 3.43px",
                     }}
                   >
-                    {visibilityLabel}
-                  </span>
-                </div>
+                    <span
+                      className="font-semibold text-center"
+                      style={{
+                        fontFamily: "'Pretendard Variable', sans-serif",
+                        fontSize: "9.17845px",
+                        lineHeight: "1.3",
+                        color: "rgba(93, 107, 110, 0.8)",
+                      }}
+                    >
+                      {visibilityLabel}
+                    </span>
+                  </div>
 
-                {/* Tag 2 (Source) */}
-                <div
-                  className="flex items-center justify-center rounded-[9.17845px]"
-                  style={{
-                    backgroundColor: sourceBg,
-                    padding: "2.06px 8px 3.43px",
-                  }}
-                >
-                  <span
-                    className="font-semibold text-center"
+                  {/* Tag 2 (Source) */}
+                  <div
+                    className="flex items-center justify-center rounded-[9.17845px]"
                     style={{
-                      fontFamily: "'Pretendard Variable', sans-serif",
-                      fontSize: "9.17845px",
-                      lineHeight: "1.3",
-                      color: "rgba(93, 107, 110, 0.8)",
+                      backgroundColor: sourceBg,
+                      padding: "2.06px 8px 3.43px",
                     }}
                   >
-                    {sourceLabel}
-                  </span>
-                </div>
+                    <span
+                      className="font-semibold text-center"
+                      style={{
+                        fontFamily: "'Pretendard Variable', sans-serif",
+                        fontSize: "9.17845px",
+                        lineHeight: "1.3",
+                        color: "rgba(93, 107, 110, 0.8)",
+                      }}
+                    >
+                      {sourceLabel}
+                    </span>
+                  </div>
 
-                {/* Tag 3 (Phase) */}
-                <div
-                  className="flex items-center justify-center rounded-[9.17845px]"
-                  style={{
-                    backgroundColor: phaseBg,
-                    padding: "2.06px 8px 3.43px",
-                  }}
-                >
-                  <span
-                    className="font-semibold text-center"
+                  {/* Tag 3 (Phase) */}
+                  <div
+                    className="flex items-center justify-center rounded-[9.17845px]"
                     style={{
-                      fontFamily: "'Pretendard Variable', sans-serif",
-                      fontSize: "9.17845px",
-                      lineHeight: "1.3",
-                      color: "rgba(93, 107, 110, 0.8)",
+                      backgroundColor: phaseBg,
+                      padding: "2.06px 8px 3.43px",
                     }}
                   >
-                    {phaseLabel}
-                  </span>
+                    <span
+                      className="font-semibold text-center"
+                      style={{
+                        fontFamily: "'Pretendard Variable', sans-serif",
+                        fontSize: "9.17845px",
+                        lineHeight: "1.3",
+                        color: "rgba(93, 107, 110, 0.8)",
+                      }}
+                    >
+                      {phaseLabel}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

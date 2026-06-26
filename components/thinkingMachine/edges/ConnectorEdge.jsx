@@ -279,6 +279,18 @@ function getLabelAnchor(points, sourceX, sourceY, targetX, targetY) {
   return fallback;
 }
 
+function getBezierMidpoint(sx, sy, tx, ty, controlDistance) {
+  const cp1x = sx + controlDistance;
+  const cp1y = sy;
+  const cp2x = tx - controlDistance;
+  const cp2y = ty;
+
+  const x = 0.125 * sx + 0.375 * cp1x + 0.375 * cp2x + 0.125 * tx;
+  const y = 0.125 * sy + 0.375 * cp1y + 0.375 * cp2y + 0.125 * ty;
+
+  return { x, y };
+}
+
 export default function ConnectorEdge({
   id,
   sourceX,
@@ -290,12 +302,8 @@ export default function ConnectorEdge({
 }) {
   const sourceOffsetY = toFiniteNumber(data?.sourceOffsetY, 0);
   const targetOffsetY = toFiniteNumber(data?.targetOffsetY, 0);
-  const clearanceX = toFiniteNumber(data?.clearanceX, DEFAULT_CLEARANCE);
-  const laneGap = toFiniteNumber(data?.laneGap, DEFAULT_LANE_GAP);
   const alignmentMeta = getAlignmentVisualMeta(data?.alignmentState);
-  const lineColor = data?.alignmentStroke || alignmentMeta.stroke || DEFAULT_LINE_COLOR;
   const lineWidth = toFiniteNumber(data?.lineWidth, DEFAULT_LINE_WIDTH);
-  const curveTension = toFiniteNumber(data?.curveTension, DEFAULT_CURVE_TENSION);
   const lineDash = data?.isContinuation ? "5 5" : (data?.alignmentLineDash || alignmentMeta.lineDash);
 
   // 드래그 중 서브픽셀 변동으로 경로 후보가 바뀌며 라벨·선이 떨리는 것을 줄임
@@ -303,29 +311,44 @@ export default function ConnectorEdge({
   const tx = Math.round(targetX);
   const sy = Math.round(sourceY + sourceOffsetY);
   const ty = Math.round(targetY + targetOffsetY);
-  const points = buildOrthogonalPoints(sx, sy, tx, ty, clearanceX, laneGap);
-  const path = buildOrganicBezierPath(points, curveTension);
-  const startPoint = points[0] ?? { x: sx, y: sy };
-  const endPoint = points[points.length - 1] ?? { x: tx, y: ty };
+
+  const dx = tx - sx;
+  const controlDistance = Math.max(Math.abs(dx) * 0.45, 40);
+  const path = `M ${sx} ${sy} C ${sx + controlDistance} ${sy}, ${tx - controlDistance} ${ty}, ${tx} ${ty}`;
+
+  const startPoint = { x: sx, y: sy };
+  const endPoint = { x: tx, y: ty };
   const label = typeof data?.label === "string" ? data.label.replace(/_/g, " ") : "";
   const alignmentLabel = typeof data?.alignmentLabel === "string" ? data.alignmentLabel : alignmentMeta.label;
-  const labelAnchor = getLabelAnchor(points, sx, sy, tx, ty);
+
+  const labelAnchor = getBezierMidpoint(sx, sy, tx, ty, controlDistance);
   const labelX = Math.round(labelAnchor.x);
-  const labelY = Math.round(labelAnchor.y);
+  const labelY = Math.round(labelAnchor.y) - 6;
+
   const sourceTypeMeta = getTypeMeta(data?.sourceCategory);
   const isSelected = Boolean(selected);
   const underlayStroke = isSelected ? "rgba(255, 255, 255, 0.24)" : "rgba(255, 255, 255, 0.12)";
-  const primaryStroke = isSelected ? "rgba(255, 255, 255, 0.92)" : lineColor;
-  const primaryWidth = isSelected ? lineWidth + 0.2 : lineWidth;
-  const endpointRadius = isSelected ? 2.1 : 1.8;
+  
+  const gradientId = `gradient-${id}`;
+  const primaryStroke = isSelected ? "rgba(255, 255, 255, 0.92)" : `url(#${gradientId})`;
+  const startDotColor = isSelected ? "rgba(255, 255, 255, 0.92)" : "#41D9D2";
+  const endDotColor = isSelected ? "rgba(255, 255, 255, 0.92)" : "#BAFFE2";
+
+  const primaryWidth = isSelected ? lineWidth + 0.4 : 2.5;
 
   return (
     <g className={`tm-connector-edge ${isSelected ? "is-selected" : ""}`}>
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#41D9D2" />
+          <stop offset="100%" stopColor="#BAFFE2" />
+        </linearGradient>
+      </defs>
       <BaseEdge
         path={path}
         style={{
           stroke: underlayStroke,
-          strokeWidth: lineWidth + 2.2,
+          strokeWidth: primaryWidth + 2.2,
           strokeLinecap: "round",
           strokeLinejoin: "round",
           opacity: isSelected ? 0.95 : 0.82,
@@ -348,22 +371,39 @@ export default function ConnectorEdge({
           strokeDasharray: lineDash,
         }}
       />
+      
+      {/* Start Point Donut Ring */}
       <circle
         cx={startPoint.x}
         cy={startPoint.y}
-        r={endpointRadius}
-        fill={primaryStroke}
-        stroke={isSelected ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.68)"}
-        strokeWidth="0.85"
+        r={3.8}
+        fill="#FFFFFF"
+        stroke={startDotColor}
+        strokeWidth="1.6"
+      />
+      <circle
+        cx={startPoint.x}
+        cy={startPoint.y}
+        r={1.3}
+        fill={startDotColor}
+      />
+
+      {/* End Point Donut Ring */}
+      <circle
+        cx={endPoint.x}
+        cy={endPoint.y}
+        r={3.8}
+        fill="#FFFFFF"
+        stroke={endDotColor}
+        strokeWidth="1.6"
       />
       <circle
         cx={endPoint.x}
         cy={endPoint.y}
-        r={endpointRadius}
-        fill={primaryStroke}
-        stroke={isSelected ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.68)"}
-        strokeWidth="0.85"
+        r={1.3}
+        fill={endDotColor}
       />
+
       {label || alignmentLabel ? (
         <foreignObject
           width={112}
