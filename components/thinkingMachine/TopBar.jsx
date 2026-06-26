@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Home, ChevronDown } from "lucide-react";
+import { Home } from "lucide-react";
+import MeetingParticipantsBar from "@/components/thinkingMachine/ui/MeetingParticipantsBar";
 import {
   ActionStepIcon,
   DecisionStepIcon,
@@ -24,6 +25,9 @@ export default function TopBar({
   projectMetaHref = "/projects",
   projectMetaLabel = "Project workspace",
   teamMembers = [],
+  activeSpeakerId,
+  isSpeaking = false,
+  hasSpeechActivity = false,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(projectTitle);
@@ -183,140 +187,12 @@ export default function TopBar({
 
           {/* Right Column: Members Panel (Frame 1410167793) */}
           <div className="flex-1 flex justify-end">
-            <div
-              className="pointer-events-auto flex flex-row items-center"
-              style={{
-                width: "172px",
-                height: "36px",
-                gap: "5px",
-              }}
-            >
-              {/* Frame 1410167786 (Active Speaker / TaeEun) */}
-              <div
-                className="relative flex flex-col items-start"
-                style={{
-                  boxSizing: "border-box",
-                  width: "56px",
-                  height: "36px",
-                  background: "rgba(255, 255, 255, 0.64)",
-                  border: "1px solid #FFFFFF",
-                  boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
-                  borderRadius: "35px",
-                  padding: "3px 9px",
-                  gap: "8px",
-                }}
-              >
-                {/* Frame 1410167781 (Active Speaker Circle - T) */}
-                <div
-                  className="absolute flex items-center justify-center text-white"
-                  style={{
-                    width: "26px",
-                    height: "26px",
-                    left: "9px",
-                    top: "4px",
-                    background: "#A2E1E4",
-                    boxShadow: "0px 0px 17.8px rgba(194, 255, 169, 0.8)",
-                    borderRadius: "15.5px",
-                  }}
-                >
-                  <span className="text-[13px] font-normal leading-[15px]">T</span>
-                </div>
-
-                {/* Frame 1410167792 (Voice/Audio Indicator) */}
-                <div
-                  className="absolute flex flex-row items-start"
-                  style={{
-                    width: "16px",
-                    height: "16px",
-                    left: "31px",
-                    top: "3px",
-                    background: "#EBFFA3",
-                    borderRadius: "9px",
-                    padding: "2.5px 3.2px",
-                    gap: "6px",
-                  }}
-                >
-                  {/* Frame 1410167791 (Equalizer Bars) */}
-                  <div className="flex flex-row items-center gap-[1.2px]" style={{ width: "9px", height: "10px" }}>
-                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2px", height: "6px" }} />
-                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2px", height: "10px" }} />
-                    <div className="bg-[#4FC4C4] rounded-[21px]" style={{ width: "2px", height: "4.5px" }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Frame 1410167785 (Other Team Members List) */}
-              <div
-                className="relative"
-                style={{
-                  boxSizing: "border-box",
-                  width: "111px",
-                  height: "36px",
-                  background: "rgba(255, 255, 255, 0.64)",
-                  border: "1px solid #FFFFFF",
-                  boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
-                  borderRadius: "35px",
-                }}
-              >
-                {/* Frame 1410167783 (Hyeonji - Pink) */}
-                <div
-                  className="absolute flex items-center justify-center text-white border border-white"
-                  style={{
-                    width: "26px",
-                    height: "26px",
-                    left: "7px",
-                    top: "4px",
-                    background: "#FFA6E9",
-                    borderRadius: "15.5px",
-                  }}
-                >
-                  <span className="text-[13px] font-normal leading-[15px]">H</span>
-                </div>
-
-                {/* Frame 1410167782 (Jimin - Blue) */}
-                <div
-                  className="absolute flex items-center justify-center text-white border border-white"
-                  style={{
-                    width: "26px",
-                    height: "26px",
-                    left: "29px",
-                    top: "4px",
-                    background: "#99B8E0",
-                    borderRadius: "15.5px",
-                  }}
-                >
-                  <span className="text-[13px] font-normal leading-[15px]">J</span>
-                </div>
-
-                {/* Frame 1410167780 (Sooyun - Dark Blue) */}
-                <div
-                  className="absolute flex items-center justify-center text-white border border-white"
-                  style={{
-                    width: "26px",
-                    height: "26px",
-                    left: "51px",
-                    top: "4px",
-                    background: "#2C3E81",
-                    borderRadius: "15.5px",
-                  }}
-                >
-                  <span className="text-[13px] font-normal leading-[15px]">S</span>
-                </div>
-
-                {/* Chevron Down (Dropdown Arrow) */}
-                <div
-                  className="absolute flex items-center justify-center"
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    left: "83px",
-                    top: "7px",
-                  }}
-                >
-                  <ChevronDown className="h-3.5 w-3.5 text-[#C5C5C5]" />
-                </div>
-              </div>
-            </div>
+            <MeetingParticipantsBar
+              teamMembers={teamMembers}
+              activeSpeakerId={activeSpeakerId}
+              isSpeaking={isSpeaking}
+              hasSpeechActivity={hasSpeechActivity}
+            />
           </div>
 
         </div>

@@ -31,6 +31,9 @@ import {
     mergeMeetingMemory,
 } from "@/lib/thinkingMachine/meetingMemory";
 import { readCurrentUser } from "@/lib/thinkingMachine/clientUser";
+import {
+    resolveTeamMember,
+} from "@/lib/thinkingMachine/participantMeta";
 import { buildReasoningAlignmentAnalysis } from "@/lib/thinkingMachine/reasoningAlignment";
 import { buildTeamConflictAnalysis } from "@/lib/thinkingMachine/conflictAnalysis";
 import { explainConflict } from "@/lib/thinkingMachine/apiClient";
@@ -264,6 +267,15 @@ export default function ThinkingMachine({
     const effectiveCurrentUserRole = currentMember?.role || currentUserRole;
     const currentRoleMeta = getRoleMeta(effectiveCurrentUserRole);
     const normalizedStage = useMemo(() => normalizeReasoningStage(stage), [stage]);
+    const hasSpeechActivity = Boolean(interimTranscript.trim() || sttTranscript.trim());
+    const activeSpeakerId = useMemo(() => {
+        if (!isListening) return null;
+        return (
+            resolveTeamMember(teamMembers, { id: currentUserId, name: currentUserName })?.id ||
+            "user-hyeonji"
+        );
+    }, [currentUserId, currentUserName, isListening, teamMembers]);
+    const isActiveSpeakerTalking = isListening;
 
     useProjectGraphSync({
         projectId,
@@ -1060,6 +1072,9 @@ export default function ThinkingMachine({
                 projectMetaHref={projectMetaHref}
                 projectMetaLabel="Project workspace"
                 teamMembers={teamMembers}
+                activeSpeakerId={activeSpeakerId}
+                isSpeaking={isActiveSpeakerTalking}
+                hasSpeechActivity={hasSpeechActivity}
             />
 
             <main className="flex-1 w-full h-full relative">

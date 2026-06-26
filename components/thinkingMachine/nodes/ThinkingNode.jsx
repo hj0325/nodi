@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Handle, Position } from "reactflow";
 import { getTypeMeta, normalizeNodeCategory, normalizeJobTag, getJobTagMeta, getTopicTagMeta, resolveTopicTagForNode, normalizeVisibility } from "@/lib/thinkingMachine/nodeMeta";
+import { getParticipantMeta } from "@/lib/thinkingMachine/participantMeta";
 import ConflictPopover from "@/components/thinkingMachine/conflicts/ConflictPopover";
 
 const HANDLE_STYLE = {
@@ -37,33 +38,8 @@ function AnchorPort({ side }) {
   );
 }
 
-function getSpeakerMeta(name) {
-  const cleanName = typeof name === "string" ? name.trim() : "";
-  if (!cleanName) {
-    return { initial: "U", bg: "#2E3A59" }; // Default User (Dark Navy)
-  }
-  const firstChar = cleanName.charAt(0).toUpperCase();
-  
-  if (firstChar === "H") {
-    return { initial: "H", bg: "#FFA6E9" }; // Hyeonji (Pink)
-  }
-  if (firstChar === "T") {
-    return { initial: "T", bg: "#62B8AA" }; // TaeEun (Teal)
-  }
-  if (firstChar === "J") {
-    return { initial: "J", bg: "#60A5FA" }; // Jimin / JaeWon (Sky Blue)
-  }
-  if (firstChar === "S") {
-    return { initial: "S", bg: "#A78BFA" }; // Sooyun / SangHun (Purple)
-  }
-  if (cleanName.toLowerCase() === "ai" || cleanName.toLowerCase() === "agent") {
-    return { initial: "AI", bg: "#818CF8" }; // AI (Indigo)
-  }
-  
-  return { initial: firstChar, bg: "#2E3A59" }; // Default (Dark Navy)
-}
-
 export default function ThinkingNode({ id, data = {} }) {
+  const speakerMeta = useMemo(() => getParticipantMeta(data.editedBy), [data.editedBy]);
   const portColor = getPortColor(data.category);
   const hasLeftPort = Boolean(data.hasLeftPort);
   const hasRightPort = Boolean(data.hasRightPort);
@@ -102,8 +78,6 @@ export default function ThinkingNode({ id, data = {} }) {
     content: data.content,
   });
   const jobTagMeta = getJobTagMeta(jobTag);
-
-  const speakerMeta = useMemo(() => getSpeakerMeta(data.editedBy), [data.editedBy]);
 
   const [isOriginal, setIsOriginal] = useState(false);
 
