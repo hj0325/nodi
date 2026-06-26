@@ -358,7 +358,7 @@ export default function Home() {
                 cardWidth = 280;
                 cardHeight = 320;
                 cardOpacity = 0.95;
-                cardRadius = "24px";
+                cardRadius = "18px";
                 cardShadow = isActive 
                   ? "0px 16px 40px rgba(114, 114, 114, 0.18)" 
                   : "0px 10px 24px rgba(0, 0, 0, 0.04)";
@@ -366,7 +366,7 @@ export default function Home() {
                 cardGap = "8px";
 
                 innerBg = isActive ? "#CEF8F1" : "#EEF5F3";
-                innerRadius = "18px";
+                innerRadius = "13px";
                 innerPadding = "20px 24px";
                 innerGap = "44px";
 
@@ -392,7 +392,7 @@ export default function Home() {
                 cardWidth = isActive ? 253 : (distance === 1 ? 221.6 : 183.8);
                 cardHeight = isActive ? 289.6 : (distance === 1 ? 253.6 : 210.4);
                 
-                cardRadius = isActive ? "27.4px" : (distance === 1 ? "24px" : "19.9px");
+                cardRadius = isActive ? "21px" : (distance === 1 ? "18px" : "15px");
                 cardShadow = isActive
                   ? "0px 20.1px 51.8px rgba(114, 114, 114, 0.21)"
                   : (distance === 1
@@ -404,7 +404,7 @@ export default function Home() {
                 cardGap = isActive ? "9.1px" : (distance === 1 ? "8px" : "6.6px");
 
                 innerBg = isActive ? "#CEF8F1" : "#EEF5F3";
-                innerRadius = isActive ? "21px" : (distance === 1 ? "18.4px" : "15.2px");
+                innerRadius = isActive ? "16px" : (distance === 1 ? "14px" : "11.5px");
                 innerPadding = isActive
                   ? "22px 30px 25px 16px"
                   : (distance === 1 ? "19.2px 26.4px 22.4px 14.4px" : "15.9px 21.9px 18.6px 11.9px");
