@@ -3,10 +3,11 @@
 import { useCallback } from "react";
 import { ingestMeetingChunk } from "@/lib/thinkingMachine/apiClient";
 import { mergeMeetingMemory } from "@/lib/thinkingMachine/meetingMemory";
-import { toConnectorEdges } from "@/lib/thinkingMachine/connectorEdges";
+import { toConnectorEdges, getEdgeContinuationFlag } from "@/lib/thinkingMachine/connectorEdges";
 import { toReactFlowNode } from "@/lib/thinkingMachine/reactflowTransforms";
 import {
   relayoutTopLevelThinkingNodes,
+  shiftClusterBelowAnchor,
   shiftClusterRightOfExisting,
 } from "@/lib/thinkingMachine/graphMerge";
 import { normalizeVisibility } from "@/lib/thinkingMachine/nodeMeta";
@@ -32,8 +33,9 @@ export function useMeetingCaptureFlow({
   setHighlightedNodeIds,
   animateViewportToNodes,
   recordProjectActivity,
+  meetingState = "active",
 }) {
-  const applyMeetingGraphPatch = useCallback((graphPatch = {}) => {
+  const applyMeetingGraphPatch = useCallback((graphPatch = {}, captureMeetingState = meetingState) => {
     const incomingNodes = Array.isArray(graphPatch?.nodes) ? graphPatch.nodes : [];
     const incomingEdges = Array.isArray(graphPatch?.edges) ? graphPatch.edges : [];
     if (!incomingNodes.length && !incomingEdges.length) {
@@ -54,13 +56,30 @@ export function useMeetingCaptureFlow({
       },
     }));
     const rawNewNodes = normalizedIncoming.map((node) => toReactFlowNode(node, null));
-    const placedNodes = nodes.length ? shiftClusterRightOfExisting(nodes, rawNewNodes) : rawNewNodes;
+    const isOffMeeting =
+      graphPatch?.placementMode === "below" || captureMeetingState === "ended";
+    const anchorEdge =
+      incomingEdges.find((edge) => getEdgeContinuationFlag(edge)) || incomingEdges[0];
+    const anchorNode = anchorEdge?.source
+      ? nodes.find((node) => node.id === anchorEdge.source)
+      : null;
+
+    let placedNodes = rawNewNodes;
+    if (nodes.length) {
+      placedNodes =
+        isOffMeeting && anchorNode
+          ? shiftClusterBelowAnchor(anchorNode, rawNewNodes, nodes, edges)
+          : shiftClusterRightOfExisting(nodes, rawNewNodes);
+    }
+
     const mergedNodes = [...nodes, ...placedNodes];
     const existingEdgeIds = new Set(edges.map((edge) => edge.id));
     const nextRawEdges = incomingEdges.filter((edge) => edge?.id && !existingEdgeIds.has(edge.id));
     const nextConnectorEdges = toConnectorEdges(nextRawEdges, mergedNodes, edges);
     const nextEdges = [...edges, ...nextConnectorEdges];
-    const relaidNodes = relayoutTopLevelThinkingNodes(mergedNodes, nextEdges);
+    const relaidNodes = isOffMeeting
+      ? mergedNodes
+      : relayoutTopLevelThinkingNodes(mergedNodes, nextEdges);
 
     setNodes(relaidNodes);
     setEdges(nextEdges);
@@ -70,7 +89,7 @@ export function useMeetingCaptureFlow({
       nextEdges,
       createdNodeIds: placedNodes.map((node) => node.id),
     };
-  }, [currentUserId, currentUserName, edges, nodes, setEdges, setNodes]);
+  }, [currentUserId, currentUserName, edges, meetingState, nodes, setEdges, setNodes]);
 
   const handleMeetingCaptureSubmit = useCallback(async (chunkText) => {
     if (!projectId) return;
@@ -115,9 +134,10 @@ export function useMeetingCaptureFlow({
           },
         },
         stage: normalizedStage,
+        meetingState,
       });
 
-      const mergeResult = applyMeetingGraphPatch(result?.graphPatch || {});
+      const mergeResult = applyMeetingGraphPatch(result?.graphPatch || {}, meetingState);
       const nextMeetingMemory = mergeMeetingMemory(meetingMemory, result?.memoryPatch || {});
       setMeetingMemory(nextMeetingMemory);
       setMeetingCaptureSummary(result?.meetingSummary || null);
@@ -164,6 +184,7 @@ export function useMeetingCaptureFlow({
     meetingMemoryReadout.unresolvedAreas,
     meetingMemoryReadout.unresolvedQuestions,
     meetingSessionIdRef,
+    meetingState,
     nodes,
     normalizedStage,
     projectId,

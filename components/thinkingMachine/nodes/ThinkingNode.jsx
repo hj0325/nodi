@@ -2,12 +2,22 @@
 
 import { useMemo, useState } from "react";
 import { Handle, Position } from "reactflow";
-import { getTypeMeta, normalizeNodeCategory, normalizeJobTag, getJobTagMeta, getTopicTagMeta, resolveTopicTagForNode, normalizeVisibility } from "@/lib/thinkingMachine/nodeMeta";
+import { getTypeMeta, normalizeNodeCategory, normalizeJobTag, getJobTagMeta, getTopicTagMeta, resolveTopicTagForNode, normalizeVisibility, splitOriginalSpeechParagraphs, ORIGINAL_SPEECH_HIGHLIGHT_PHRASE } from "@/lib/thinkingMachine/nodeMeta";
 import { getParticipantMeta } from "@/lib/thinkingMachine/participantMeta";
+import { NODE_PORT_LAYOUT } from "@/lib/thinkingMachine/reactflowTransforms";
 import ConflictPopover from "@/components/thinkingMachine/conflicts/ConflictPopover";
 
 const HANDLE_STYLE = {
-  top: 53,
+  top: NODE_PORT_LAYOUT.sidePortY,
+  width: 1,
+  height: 1,
+  border: "none",
+  background: "transparent",
+  opacity: 0,
+  pointerEvents: "none",
+};
+
+const VERTICAL_HANDLE_STYLE = {
   width: 1,
   height: 1,
   border: "none",
@@ -20,20 +30,142 @@ function getPortColor(category) {
   return getTypeMeta(normalizeNodeCategory(category)).color;
 }
 
+function AnchorPortRing() {
+  return (
+    <div className="relative flex h-[8.9px] w-[8.9px] items-center justify-center rounded-full bg-[#A0D2E7]">
+      <div className="h-[4.45px] w-[4.45px] rounded-full bg-white" />
+    </div>
+  );
+}
+
 function AnchorPort({ side }) {
+  if (side === "top") {
+    return (
+      <div
+        className="pointer-events-none absolute left-1/2 top-[-7.23px] z-[40] flex h-[14.46px] w-[14.46px] -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
+        aria-hidden
+      >
+        <AnchorPortRing />
+      </div>
+    );
+  }
+
+  if (side === "bottom") {
+    return (
+      <div
+        className="pointer-events-none absolute bottom-[-7.23px] left-1/2 z-[40] flex h-[14.46px] w-[14.46px] -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
+        aria-hidden
+      >
+        <AnchorPortRing />
+      </div>
+    );
+  }
+
   const sideClass = side === "left" ? "left-[-7.23px]" : "right-[-7.23px]";
 
   return (
     <div
       className={`pointer-events-none absolute ${sideClass} z-[40] flex h-[14.46px] w-[14.46px] items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_rgba(0,0,0,0.08)]`}
-      style={{ top: "53px", transform: "translateY(-50%)" }}
+      style={{ top: `${NODE_PORT_LAYOUT.sidePortY}px`, transform: "translateY(-50%)" }}
       aria-hidden
     >
-      <div
-        className="relative flex h-[8.9px] w-[8.9px] items-center justify-center rounded-full bg-[#A0D2E7]"
+      <AnchorPortRing />
+    </div>
+  );
+}
+
+function highlightSpeechPhrase(text, phrase = ORIGINAL_SPEECH_HIGHLIGHT_PHRASE) {
+  if (typeof text !== "string" || !text.includes(phrase)) return text;
+  const start = text.indexOf(phrase);
+  return (
+    <>
+      {text.slice(0, start)}
+      <span
+        style={{
+          backgroundColor: "#F4FC8B",
+          borderRadius: "2px",
+          padding: "0 1px",
+        }}
       >
-        <div className="h-[4.45px] w-[4.45px] rounded-full bg-white" />
+        {phrase}
+      </span>
+      {text.slice(start + phrase.length)}
+    </>
+  );
+}
+
+function RefinedNodeSummary({ title, content }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: "5px",
+        width: "205px",
+        height: "49px",
+      }}
+    >
+      <div
+        className="line-clamp-1 font-semibold"
+        style={{
+          width: "205px",
+          height: "16px",
+          fontFamily: "'Pretendard Variable', sans-serif",
+          fontSize: "12px",
+          lineHeight: "130%",
+          color: "#34849C",
+        }}
+      >
+        {title}
       </div>
+      <div
+        className="line-clamp-2 font-normal"
+        style={{
+          width: "205px",
+          height: "28px",
+          fontFamily: "'Pretendard Variable', sans-serif",
+          fontSize: "10px",
+          lineHeight: "138%",
+          color: "#444859",
+        }}
+      >
+        {content}
+      </div>
+    </div>
+  );
+}
+
+function OriginalSpeechContent({ content }) {
+  const paragraphs = splitOriginalSpeechParagraphs(content);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: "8px",
+        width: "205px",
+      }}
+    >
+      {paragraphs.map((paragraph, index) => (
+        <p
+          key={`${index}-${paragraph.slice(0, 12)}`}
+          style={{
+            margin: 0,
+            width: "205px",
+            fontFamily: "'Pretendard Variable', sans-serif",
+            fontStyle: "normal",
+            fontWeight: 400,
+            fontSize: "10px",
+            lineHeight: "138%",
+            color: "#444859",
+          }}
+        >
+          {highlightSpeechPhrase(paragraph)}
+        </p>
+      ))}
     </div>
   );
 }
@@ -43,6 +175,8 @@ export default function ThinkingNode({ id, data = {} }) {
   const portColor = getPortColor(data.category);
   const hasLeftPort = Boolean(data.hasLeftPort);
   const hasRightPort = Boolean(data.hasRightPort);
+  const hasTopPort = Boolean(data.hasTopPort);
+  const hasBottomPort = Boolean(data.hasBottomPort);
 
 
   // Tag 1: Discussion / Accepted / Rejected
@@ -52,15 +186,19 @@ export default function ThinkingNode({ id, data = {} }) {
   let visibilityLabel = "Discussion";
   let visibilityBg = "#F4FC8B";
 
-  if (isPreExistingMeetNode) {
-    visibilityLabel = "Accepted";
-    visibilityBg = "#D1FFEB";
+  if (visibility === "rejected") {
+    visibilityLabel = "Rejected";
+    visibilityBg = "#FFE0D4";
   } else if (visibility === "shared" || visibility === "reviewed" || visibility === "agreed") {
     visibilityLabel = "Accepted";
     visibilityBg = "#D1FFEB";
-  } else if (visibility === "rejected") {
-    visibilityLabel = "Rejected";
-    visibilityBg = "#FFE0D4";
+  } else if (
+    isPreExistingMeetNode &&
+    visibility !== "candidate" &&
+    visibility !== "private"
+  ) {
+    visibilityLabel = "Accepted";
+    visibilityBg = "#D1FFEB";
   } else {
     visibilityLabel = "Discussion";
     visibilityBg = "#F4FC8B";
@@ -81,9 +219,12 @@ export default function ThinkingNode({ id, data = {} }) {
 
   const [isOriginal, setIsOriginal] = useState(false);
 
-  const displayTitle = isOriginal && data.originalTitle ? data.originalTitle : (data.title || data.label || "Untitled Node");
-  const displayContent = isOriginal && data.originalContent ? data.originalContent : (data.content || "");
-  const hasOriginal = Boolean(data.originalContent && data.originalContent.trim());
+  const displayTitle = data.title || data.label || "Untitled Node";
+  const refinedContent = data.content || "";
+  const originalContent = data.originalContent || "";
+  const hasOriginal = Boolean(originalContent.trim());
+  const showingOriginal = hasOriginal && isOriginal;
+  const showTags = !showingOriginal;
 
   return (
     <div className="relative h-full w-full">
@@ -106,7 +247,7 @@ export default function ThinkingNode({ id, data = {} }) {
           padding: "0px",
           gap: "8px",
           width: "257px",
-          height: "195.76px",
+          minHeight: showingOriginal ? "228px" : "195.76px",
         }}
       >
         {/* Toggle (Frame 1410167810) */}
@@ -124,7 +265,7 @@ export default function ThinkingNode({ id, data = {} }) {
             order: 0,
             flexGrow: 0,
           }}
-          title={hasOriginal ? (isOriginal ? "AI 요약본 보기" : "STT 원문 보기") : "원문 없음"}
+          title={hasOriginal ? (showingOriginal ? "AI 정제 노드 보기" : "STT 원문 보기") : "원문 없음"}
         >
           <div
             style={{
@@ -132,9 +273,9 @@ export default function ThinkingNode({ id, data = {} }) {
               display: "flex",
               flexDirection: "row",
               alignItems: "flex-start",
-              padding: !isOriginal
-                ? "3.37255px 2.52941px 21.9216px"
-                : "21.9216px 2.52941px 3.37255px",
+              padding: showingOriginal
+                ? "21.9216px 2.52941px 3.37255px"
+                : "3.37255px 2.52941px 21.9216px",
               gap: "8.43px",
               width: "22.76px",
               height: "43px",
@@ -156,9 +297,7 @@ export default function ThinkingNode({ id, data = {} }) {
                 borderRadius: "50%",
                 flex: "none",
                 flexShrink: 0,
-                background: !isOriginal
-                  ? "#62B8AA"
-                  : "#CBD5E1",
+                background: showingOriginal ? "#CBD5E1" : "#62B8AA",
                 boxShadow: "inset -0.843137px -1.68627px 3.20392px rgba(98, 98, 98, 0.25), inset 0px 3.37255px 2.52941px rgba(255, 255, 255, 0.26)",
                 transition: "background-color 0.2s ease-in-out",
               }}
@@ -177,7 +316,8 @@ export default function ThinkingNode({ id, data = {} }) {
             padding: "10px 14px 12px",
             gap: "10px",
             width: "257px",
-            height: "165px",
+            minHeight: showingOriginal ? "198px" : "165px",
+            height: showingOriginal ? "auto" : "165px",
             background: "linear-gradient(249.98deg, rgba(179, 236, 236, 0.12) -3.67%, rgba(168, 255, 208, 0.0708) 95.87%)",
             border: "0.843545px solid #CDE9E9",
             boxShadow: "0.562363px 0.562363px 11.2473px 0.631499px rgba(171,171,171,0.3)",
@@ -188,6 +328,36 @@ export default function ThinkingNode({ id, data = {} }) {
             flexGrow: 0,
           }}
         >
+          {hasTopPort ? <AnchorPort side="top" /> : null}
+          {hasBottomPort ? <AnchorPort side="bottom" /> : null}
+          {hasTopPort ? (
+            <Handle
+              id="top-target"
+              type="target"
+              position={Position.Top}
+              style={{
+                ...VERTICAL_HANDLE_STYLE,
+                top: 0,
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+              }}
+              isConnectable={false}
+            />
+          ) : null}
+          {hasBottomPort ? (
+            <Handle
+              id="bottom-source"
+              type="source"
+              position={Position.Bottom}
+              style={{
+                ...VERTICAL_HANDLE_STYLE,
+                bottom: 0,
+                left: "50%",
+                transform: "translate(-50%, 50%)",
+              }}
+              isConnectable={false}
+            />
+          ) : null}
           {/* Frame 1410167803 */}
           <div
             style={{
@@ -197,7 +367,8 @@ export default function ThinkingNode({ id, data = {} }) {
               padding: "0px",
               gap: "7px",
               width: "229px",
-              height: "143px",
+              minHeight: showingOriginal ? "176px" : "143px",
+              height: showingOriginal ? "auto" : "143px",
               flex: "none",
               order: 0,
               flexGrow: 0,
@@ -302,7 +473,8 @@ export default function ThinkingNode({ id, data = {} }) {
                 padding: "9px 12px",
                 gap: "10px",
                 width: "229px",
-                height: "112px",
+                minHeight: showingOriginal ? "148px" : "112px",
+                height: showingOriginal ? "auto" : "112px",
                 borderRadius: "11.9483px",
                 flex: "none",
                 order: 1,
@@ -317,9 +489,10 @@ export default function ThinkingNode({ id, data = {} }) {
                   flexDirection: "column",
                   alignItems: "flex-start",
                   padding: "0px",
-                  gap: visibility !== "candidate" ? (isOriginal ? "0px" : "28px") : "0px",
+                  gap: showTags ? "28px" : "0px",
                   width: "205px",
-                  height: "94px",
+                  minHeight: showingOriginal ? "126px" : "94px",
+                  height: showingOriginal ? "auto" : "94px",
                   flex: "none",
                   order: 0,
                   alignSelf: "stretch",
@@ -335,56 +508,44 @@ export default function ThinkingNode({ id, data = {} }) {
                     padding: "0px",
                     gap: "5px",
                     width: "205px",
-                    height: isOriginal ? "77px" : "49px",
+                    minHeight: showingOriginal ? "108px" : "49px",
+                    height: showingOriginal ? "auto" : "49px",
                     flex: "none",
                     order: 0,
                     alignSelf: "stretch",
                     flexGrow: 0,
                   }}
                 >
-                  {/* Title */}
-                  <div
-                    className="line-clamp-1 font-semibold"
-                    style={{
-                      width: "205px",
-                      height: "16px",
-                      fontFamily: "'Pretendard Variable', sans-serif",
-                      fontStyle: "normal",
-                      fontSize: "12px",
-                      lineHeight: "130%",
-                      color: "#34849C",
-                      flex: "none",
-                      order: 0,
-                      alignSelf: "stretch",
-                      flexGrow: 0,
-                    }}
-                  >
-                    {displayTitle}
-                  </div>
-
-                  {/* Content */}
-                  <div
-                    className={`${isOriginal ? "line-clamp-4 overflow-y-auto pr-0.5" : "line-clamp-2"} font-normal`}
-                    style={{
-                      width: "205px",
-                      height: isOriginal ? "56px" : "28px",
-                      fontFamily: "'Pretendard Variable', sans-serif",
-                      fontStyle: "normal",
-                      fontSize: "10px",
-                      lineHeight: "138%",
-                      color: "#444859",
-                      flex: "none",
-                      order: 1,
-                      alignSelf: "stretch",
-                      flexGrow: 0,
-                    }}
-                  >
-                    {displayContent}
-                  </div>
+                  {/* Title + body */}
+                  {showingOriginal ? (
+                    <>
+                      <div
+                        className="line-clamp-1 font-semibold"
+                        style={{
+                          width: "205px",
+                          height: "16px",
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontStyle: "normal",
+                          fontSize: "12px",
+                          lineHeight: "130%",
+                          color: "#34849C",
+                          flex: "none",
+                          order: 0,
+                          alignSelf: "stretch",
+                          flexGrow: 0,
+                        }}
+                      >
+                        {displayTitle}
+                      </div>
+                      <OriginalSpeechContent content={originalContent} />
+                    </>
+                  ) : (
+                    <RefinedNodeSummary title={displayTitle} content={refinedContent} />
+                  )}
                 </div>
 
                 {/* Tags Container (Frame 1410167796) */}
-                {visibility !== "candidate" && (
+                {showTags && (
                   <div
                     style={{
                       display: "flex",
@@ -437,16 +598,16 @@ export default function ThinkingNode({ id, data = {} }) {
                       </span>
                     </div>
 
-                    {/* Tag 2 (Source) */}
+                    {/* Tag 2 (Topic) */}
                     <div
                       style={{
                         display: "flex",
                         flexDirection: "row",
                         justifyContent: "center",
                         alignItems: "center",
-                        padding: "2.05663px 8px 3.42771px",
+                        padding:
+                          topicTag.length <= 3 ? "2px 6px 3px" : "2px 8px 3px",
                         gap: "6.86px",
-                        minWidth: "52px",
                         height: "17px",
                         backgroundColor: topicTagMeta.bg,
                         borderRadius: "9.17845px",
@@ -457,7 +618,6 @@ export default function ThinkingNode({ id, data = {} }) {
                     >
                       <span
                         style={{
-                          minWidth: "36px",
                           height: "12px",
                           fontFamily: "'Pretendard Variable', sans-serif",
                           fontStyle: "normal",
@@ -470,6 +630,7 @@ export default function ThinkingNode({ id, data = {} }) {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {topicTag}

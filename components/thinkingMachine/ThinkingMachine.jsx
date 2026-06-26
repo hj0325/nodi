@@ -794,6 +794,7 @@ export default function ThinkingMachine({
         setHighlightedNodeIds,
         animateViewportToNodes,
         recordProjectActivity,
+        meetingState,
     });
 
     const recognitionRef = useRef(null);

@@ -32,6 +32,7 @@ export default async function handler(req, res) {
       existing_nodes: req.body?.existing_nodes,
       meeting_memory: req.body?.meeting_memory,
       stage: req.body?.stage,
+      meetingState: req.body?.meetingState,
     });
     return res.status(200).json(result);
   } catch (e) {

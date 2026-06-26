@@ -312,9 +312,20 @@ export default function ConnectorEdge({
   const sy = Math.round(sourceY);
   const ty = Math.round(targetY);
 
-  const dx = tx - sx;
-  const controlDistance = Math.max(Math.abs(dx) * 0.45, 40);
-  const path = `M ${sx} ${sy} C ${sx + controlDistance} ${sy}, ${tx - controlDistance} ${ty}, ${tx} ${ty}`;
+  const isContinuation = Boolean(data?.isContinuation);
+  const isVertical = isContinuation && ty > sy + 20;
+  let path;
+  let controlDistance;
+
+  if (isVertical) {
+    const dy = ty - sy;
+    controlDistance = Math.max(Math.abs(dy) * 0.38, 52);
+    path = `M ${sx} ${sy} C ${sx} ${sy + controlDistance}, ${tx} ${ty - controlDistance}, ${tx} ${ty}`;
+  } else {
+    const dx = tx - sx;
+    controlDistance = Math.max(Math.abs(dx) * 0.45, 40);
+    path = `M ${sx} ${sy} C ${sx + controlDistance} ${sy}, ${tx - controlDistance} ${ty}, ${tx} ${ty}`;
+  }
 
   const startPoint = { x: sx, y: sy };
   const endPoint = { x: tx, y: ty };

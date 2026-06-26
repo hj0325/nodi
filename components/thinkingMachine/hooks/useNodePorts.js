@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { isVerticalConnectorEdge } from "@/lib/thinkingMachine/connectorEdges";
 
 export function useNodePorts({
   nodes,
@@ -18,14 +19,33 @@ export function useNodePorts({
   const portVisibilityByNode = useMemo(() => {
     const map = new Map();
     edges.forEach((edge) => {
+      const isVertical = isVerticalConnectorEdge(edge);
       if (edge?.source) {
-        const current = map.get(edge.source) || { hasLeftPort: false, hasRightPort: false };
-        current.hasRightPort = true;
+        const current = map.get(edge.source) || {
+          hasLeftPort: false,
+          hasRightPort: false,
+          hasTopPort: false,
+          hasBottomPort: false,
+        };
+        if (isVertical) {
+          current.hasBottomPort = true;
+        } else {
+          current.hasRightPort = true;
+        }
         map.set(edge.source, current);
       }
       if (edge?.target) {
-        const current = map.get(edge.target) || { hasLeftPort: false, hasRightPort: false };
-        current.hasLeftPort = true;
+        const current = map.get(edge.target) || {
+          hasLeftPort: false,
+          hasRightPort: false,
+          hasTopPort: false,
+          hasBottomPort: false,
+        };
+        if (isVertical) {
+          current.hasTopPort = true;
+        } else {
+          current.hasLeftPort = true;
+        }
         map.set(edge.target, current);
       }
     });
@@ -40,6 +60,8 @@ export function useNodePorts({
         ...n.data,
         hasLeftPort: portVisibilityByNode.get(n.id)?.hasLeftPort || false,
         hasRightPort: portVisibilityByNode.get(n.id)?.hasRightPort || false,
+        hasTopPort: portVisibilityByNode.get(n.id)?.hasTopPort || false,
+        hasBottomPort: portVisibilityByNode.get(n.id)?.hasBottomPort || false,
         ...(n.type === "postitDraft"
           ? {
               onChangeText: draftHandlers?.onPostitChangeText,
