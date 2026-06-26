@@ -71,7 +71,7 @@ void main() {
     col = clamp(col, 0.0, 1.0);
   }
 
-  vec3 highlightTint = vec3(157.0 / 255.0, 231.0 / 255.0, 203.0 / 255.0);
+  vec3 highlightTint = vec3(214.0 / 255.0, 242.0 / 255.0, 245.0 / 255.0);
   float highlight = smoothstep(0.72, 0.92, max(max(col.r, col.g), col.b));
   col = mix(col, highlightTint, highlight);
   a = max(a, highlight * 0.72);
