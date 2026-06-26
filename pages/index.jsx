@@ -3,6 +3,8 @@ import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
+import { createProject } from "@/lib/thinkingMachine/apiClient";
+import { readCurrentUser } from "@/lib/thinkingMachine/clientUser";
 
 const DotGrid = dynamic(() => import("@/components/DotGrid/DotGrid"), { ssr: false });
 const ColorBends = dynamic(() => import("@/components/ColorBends/ColorBends"), { ssr: false });
@@ -47,6 +49,7 @@ const SEEDED_PROJECTS = [
 
 export default function Home() {
   const router = useRouter();
+  const [projects, setProjects] = useState(SEEDED_PROJECTS);
   const [activeIndex, setActiveIndex] = useState(2); // Default to "AI 회의록 기획 토론"
   const [scale, setScale] = useState(1);
   const [isPortrait, setIsPortrait] = useState(false);
@@ -85,11 +88,27 @@ export default function Home() {
   }, []);
 
   const handlePrev = () => {
-    setActiveIndex((prev) => (prev > 0 ? prev - 1 : SEEDED_PROJECTS.length - 1));
+    setActiveIndex((prev) => (prev > 0 ? prev - 1 : projects.length - 1));
   };
 
   const handleNext = () => {
-    setActiveIndex((prev) => (prev < SEEDED_PROJECTS.length - 1 ? prev + 1 : 0));
+    setActiveIndex((prev) => (prev < projects.length - 1 ? prev + 1 : 0));
+  };
+
+  const handleAddProject = async () => {
+    try {
+      const nextCurrentUser = readCurrentUser();
+      const newProject = await createProject({
+        title: "새 회의록 캔버스",
+        actor: {
+          ...nextCurrentUser,
+          role: "owner",
+        },
+      });
+      void router.push(`/projects/${newProject.id}`);
+    } catch (error) {
+      console.error("Failed to create new meeting canvas:", error);
+    }
   };
 
   const handleEnterProject = (projectId) => {
@@ -106,12 +125,12 @@ export default function Home() {
     return { w, h };
   };
 
-  const totalWidth = Array.from({ length: 5 }, (_, i) => getCardSize(i).w).reduce((sum, w) => sum + w, 0) + 4 * 16;
+  const totalWidth = Array.from({ length: projects.length }, (_, i) => getCardSize(i).w).reduce((sum, w) => sum + w, 0) + (projects.length - 1) * 16;
   const xStart = (1128 - totalWidth) / 2;
 
   const ports = [];
   let currentX = xStart;
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < projects.length; i++) {
     const { w, h } = getCardSize(i);
     const yTop = (289.6 - h) / 2;
     const yPort = yTop + 36; // Local 36px matches closer to upper part of title section
@@ -172,7 +191,7 @@ export default function Home() {
             : {
                 width: "1128px",
                 height: "610px",
-                gap: "103px",
+                gap: "75px",
                 transform: `translate(-50%, -50%) scale(${scale})`,
                 transformOrigin: "center center",
               }
@@ -291,7 +310,7 @@ export default function Home() {
           style={
             isPortrait 
               ? { width: "100%", gap: "24px" } 
-              : { width: "1128px", height: "346.4px", gap: "20.8px" }
+              : { width: "1128px", height: "353.6px", gap: "28px" }
           }
         >
           {/* Cards Container (Frame 1410167851) */}
@@ -314,7 +333,7 @@ export default function Home() {
                     <stop offset="100%" stopColor="#BAFFE2" />
                   </linearGradient>
                 </defs>
-                {Array.from({ length: 4 }).map((_, i) => {
+                {Array.from({ length: Math.max(0, projects.length - 1) }).map((_, i) => {
                   const pStart = ports[i].right;
                   const pEnd = ports[i+1].left;
                   const dx = pEnd.x - pStart.x;
@@ -342,7 +361,7 @@ export default function Home() {
               </svg>
             )}
 
-            {SEEDED_PROJECTS.map((project, idx) => {
+            {projects.map((project, idx) => {
               const isActive = isPortrait ? (hoveredIndex === idx || (hoveredIndex === null && idx === 2)) : (idx === activeIndex);
               const distance = Math.abs(idx - activeIndex);
 
@@ -532,8 +551,8 @@ export default function Home() {
                           </div>
                         </div>
                       )}
-                      {/* Right Port (Hide on index 4 - outermost right) */}
-                      {idx < 4 && (
+                      {/* Right Port (Hide on index outermost right) */}
+                      {idx < projects.length - 1 && (
                         <div 
                           className="absolute right-0 translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20" 
                           style={{ top: "36px" }}
@@ -808,12 +827,13 @@ export default function Home() {
           {/* Navigation Controls (Frame 1410167855 - Hidden in Portrait Mode) */}
           {!isPortrait && (
             <div
-              className="flex flex-col justify-center items-center relative overflow-hidden"
+              className="flex flex-row justify-between items-center relative overflow-hidden"
               style={{
-                width: "109.6px",
+                width: "106px",
                 height: "36px",
-                borderRadius: "24px",
-                padding: "9.6px 12px 10.4px",
+                padding: "0 10px",
+                background: "rgba(255, 255, 255, 0.36)",
+                borderRadius: "18px",
                 boxShadow: "0 4px 10px rgba(13, 48, 64, 0.03), inset 1px 1px 0px rgba(255, 255, 255, 0.4)",
               }}
             >
@@ -822,90 +842,104 @@ export default function Home() {
                 className="absolute inset-0 z-0 pointer-events-none" 
                 style={{
                   backdropFilter: "blur(4px)",
-                  background: "rgba(255, 255, 255, 0.25)",
                   boxShadow: "inset 1px 1px 0px rgba(255, 255, 255, 0.75), inset 0 0 5px rgba(255, 255, 255, 0.75)",
                 }}
               />
 
-              {/* Frame 1410167854 */}
-              <div
-                className="flex flex-row justify-between items-center relative z-10"
+              {/* chevron-left */}
+              <button
+                onClick={handlePrev}
+                className="relative z-10 flex items-center justify-center hover:opacity-60 transition-opacity"
                 style={{
-                  width: "85.6px",
-                  height: "21.6px",
+                  width: "22px",
+                  height: "22px",
+                  background: "none",
+                  border: "none",
+                  padding: "0",
+                  cursor: "pointer",
                 }}
+                aria-label="Previous"
               >
-                {/* chevron-left */}
-                <button
-                  onClick={handlePrev}
-                  className="flex items-center justify-center hover:opacity-70 transition-opacity"
-                  style={{
-                    width: "21.6px",
-                    height: "21.6px",
-                    background: "none",
-                    border: "none",
-                    padding: "0",
-                    cursor: "pointer",
-                  }}
-                  aria-label="Previous"
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 27 27"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M8.5 2L3.5 6L8.5 10"
-                      stroke="#0D3040"
-                      strokeWidth="2.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+                  <path
+                    d="M15 8.5L10 13.5L15 18.5"
+                    stroke="#0D3040"
+                    strokeWidth="2.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
 
-                {/* Divider (Rectangle 240655900) */}
-                <div
-                  style={{
-                    width: "1px",
-                    height: "21.6px",
-                    background: "rgba(13, 48, 64, 0.15)",
-                  }}
-                />
-
-                {/* chevron-right */}
-                <button
-                  onClick={handleNext}
-                  className="flex items-center justify-center hover:opacity-70 transition-opacity"
-                  style={{
-                    width: "21.6px",
-                    height: "21.6px",
-                    background: "none",
-                    border: "none",
-                    padding: "0",
-                    cursor: "pointer",
-                  }}
-                  aria-label="Next"
+              {/* Plus / Add Canvas Button */}
+              <button
+                onClick={handleAddProject}
+                className="relative z-10 flex flex-row items-center justify-center hover:scale-105 active:scale-95 transition-all"
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  padding: "4px",
+                  background: "rgba(255, 255, 255, 0.7)",
+                  boxShadow: "inset 0px 3px 3px #FFFFFF, 0px 2px 5px rgba(13, 48, 64, 0.04)",
+                  borderRadius: "12px",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+                aria-label="Add Canvas"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M3.5 2L8.5 6L3.5 10"
-                      stroke="#0D3040"
-                      strokeWidth="2.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
+                  <path
+                    d="M12 5V19M5 12H19"
+                    stroke="#A1B0B6"
+                    strokeWidth="2.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              {/* chevron-right */}
+              <button
+                onClick={handleNext}
+                className="relative z-10 flex items-center justify-center hover:opacity-60 transition-opacity"
+                style={{
+                  width: "22px",
+                  height: "22px",
+                  background: "none",
+                  border: "none",
+                  padding: "0",
+                  cursor: "pointer",
+                }}
+                aria-label="Next"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 27 27"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 8.5L17 13.5L12 18.5"
+                    stroke="#0D3040"
+                    strokeWidth="2.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
             </div>
           )}
         </div>

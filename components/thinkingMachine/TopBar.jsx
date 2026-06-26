@@ -64,17 +64,17 @@ export default function TopBar({
               }}
             >
               {/* Home Icon (3dR2lv / Group / Vector) */}
-              <div
+              <Link
+                href="/"
+                className="hover:opacity-75 transition-opacity flex items-center justify-center cursor-pointer"
                 style={{
                   width: "18px",
                   height: "15px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                 }}
+                aria-label="Home"
               >
-                <Home className="h-[15px] w-[18px] text-[#404045]" />
-              </div>
+                <Home className="h-[15px] w-[18px] text-[#404045]" strokeWidth={2.2} />
+              </Link>
 
               {/* Project workspace / Title Text */}
               <div

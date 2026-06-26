@@ -273,7 +273,7 @@ export default function RightAgentDrawer({
                 WebkitBoxOrient: "vertical",
               }}
             >
-              {currentDirection || "AI 기반 STT 회의록의 UX 개선 방향과 구현 방식에 대한 토론중입니다."}
+              {currentDirection || "분석을 진행할 예정입니다. 음성 인식을 켜고 회의를 시작해 보세요!"}
             </p>
 
             {/* Frame 1410167812 (Close Button) */}
