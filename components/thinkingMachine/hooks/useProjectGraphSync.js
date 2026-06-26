@@ -50,7 +50,7 @@ export function useProjectGraphSync({
       try {
         const payload = await fetchProjectGraph(projectId);
         if (cancelled) return;
-        const hydratedNodes = hydrateProjectNodes(payload?.graph?.nodes || []);
+        const hydratedNodes = hydrateProjectNodes(payload?.graph?.nodes || [], { projectId });
         const rawEdges = hydrateProjectEdges(payload?.graph?.edges || []);
         const hydratedEdges = toConnectorEdges(rawEdges, hydratedNodes);
         const nextStage = payload?.graph?.stage || "research-diverge";

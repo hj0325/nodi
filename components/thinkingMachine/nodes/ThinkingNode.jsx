@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Handle, Position } from "reactflow";
-import { getTypeMeta, normalizeNodeCategory, getSourceTypeMeta, normalizeVisibility } from "@/lib/thinkingMachine/nodeMeta";
+import { getTypeMeta, normalizeNodeCategory, normalizeJobTag, getJobTagMeta, getTopicTagMeta, resolveTopicTagForNode, normalizeVisibility } from "@/lib/thinkingMachine/nodeMeta";
 import ConflictPopover from "@/components/thinkingMachine/conflicts/ConflictPopover";
 
 const HANDLE_STYLE = {
@@ -17,18 +17,6 @@ const HANDLE_STYLE = {
 
 function getPortColor(category) {
   return getTypeMeta(normalizeNodeCategory(category)).color;
-}
-
-function getPhaseLabelFromData(data = {}) {
-  const phase = data.phase || "Idea";
-  const enMap = {
-    Idea: "Idea",
-    Research: "Research",
-    Solution: "Solution",
-    Decision: "Decision",
-    Action: "Action",
-  };
-  return enMap[phase] || phase;
 }
 
 function AnchorPort({ side }) {
@@ -80,49 +68,48 @@ export default function ThinkingNode({ id, data = {} }) {
   const hasLeftPort = Boolean(data.hasLeftPort);
   const hasRightPort = Boolean(data.hasRightPort);
 
-  const sourceMeta = getSourceTypeMeta(data.sourceType);
-  const phaseLabel = getPhaseLabelFromData(data);
 
-  // Map visibility to a beautiful status label
+  // Tag 1: Discussion / Accepted / Rejected
+  const isPreExistingMeetNode = id && id.startsWith("node-meet-");
   const visibility = normalizeVisibility(data.visibility);
-  const visibilityLabel = visibility === "shared" ? "Accepted" : visibility === "reviewed" ? "Reviewed" : visibility === "agreed" ? "Agreed" : "Candidate";
+  
+  let visibilityLabel = "Discussion";
+  let visibilityBg = "#F4FC8B";
 
-  // Map source type to a beautiful meta label
-  const sourceLabel = sourceMeta.label === "AI" ? "AI" : sourceMeta.label === "User" ? "User" : sourceMeta.label === "Context" ? "Context" : "Memory";
+  if (isPreExistingMeetNode) {
+    visibilityLabel = "Accepted";
+    visibilityBg = "#D1FFEB";
+  } else if (visibility === "shared" || visibility === "reviewed" || visibility === "agreed") {
+    visibilityLabel = "Accepted";
+    visibilityBg = "#D1FFEB";
+  } else if (visibility === "rejected") {
+    visibilityLabel = "Rejected";
+    visibilityBg = "#FFE0D4";
+  } else {
+    visibilityLabel = "Discussion";
+    visibilityBg = "#F4FC8B";
+  }
 
-  // Dynamic backgrounds for tags
-  const visibilityBg = visibility === "shared"
-    ? "#D1FFEB"
-    : visibility === "reviewed"
-    ? "#E8F0FE"
-    : visibility === "agreed"
-    ? "#F3E8FF"
-    : "#FEF7E0";
+  // Tag 2: topic tag — STT meeting uses Context/Memory/STT; other scenarios use context-specific tags
+  const topicTag = resolveTopicTagForNode({ nodeId: id, data });
+  const topicTagMeta = getTopicTagMeta(topicTag);
 
-  const sourceBg = sourceMeta.label === "AI"
-    ? "#F3E8FF"
-    : sourceMeta.label === "User"
-    ? "#E8F0FE"
-    : "#EFEBFF";
-
-  const phaseBg = data.phase === "Idea"
-    ? "#FCE7F3"
-    : data.phase === "Research"
-    ? "#E0F8DB"
-    : data.phase === "Solution"
-    ? "#E0F2FE"
-    : data.phase === "Decision"
-    ? "#FEF3C7"
-    : data.phase === "Action"
-    ? "#F5F3FF"
-    : "#FCE7F3"; // fallback
+  // Tag 3: Business / UX / Tech
+  const jobTag = normalizeJobTag(data.jobTag, {
+    category: data.category,
+    phase: data.phase,
+    title: data.title,
+    content: data.content,
+  });
+  const jobTagMeta = getJobTagMeta(jobTag);
 
   const speakerMeta = useMemo(() => getSpeakerMeta(data.editedBy), [data.editedBy]);
 
   const [isOriginal, setIsOriginal] = useState(false);
 
-  const displayTitle = isOriginal && data.originalTitle ? data.originalTitle : (data.title || "Untitled Node");
-  const displayContent = isOriginal && data.originalContent ? data.originalContent : data.content;
+  const displayTitle = isOriginal && data.originalTitle ? data.originalTitle : (data.title || data.label || "Untitled Node");
+  const displayContent = isOriginal && data.originalContent ? data.originalContent : (data.content || "");
+  const hasOriginal = Boolean(data.originalContent && data.originalContent.trim());
 
   return (
     <div className="relative h-full w-full">
@@ -152,9 +139,9 @@ export default function ThinkingNode({ id, data = {} }) {
         <div
           onClick={(e) => {
             e.stopPropagation();
-            setIsOriginal(!isOriginal);
+            if (hasOriginal) setIsOriginal(!isOriginal);
           }}
-          className="cursor-pointer"
+          className={hasOriginal ? "cursor-pointer" : "cursor-default opacity-60"}
           style={{
             width: "43px",
             height: "22.76px",
@@ -163,7 +150,7 @@ export default function ThinkingNode({ id, data = {} }) {
             order: 0,
             flexGrow: 0,
           }}
-          title={isOriginal ? "AI 요약본 보기" : "STT 원문 보기"}
+          title={hasOriginal ? (isOriginal ? "AI 요약본 보기" : "STT 원문 보기") : "원문 없음"}
         >
           <div
             style={{
@@ -487,7 +474,7 @@ export default function ThinkingNode({ id, data = {} }) {
                         gap: "6.86px",
                         minWidth: "52px",
                         height: "17px",
-                        backgroundColor: sourceLabel === "Memory" ? "#D4CDF1" : sourceBg,
+                        backgroundColor: topicTagMeta.bg,
                         borderRadius: "9.17845px",
                         flex: "none",
                         order: 1,
@@ -505,17 +492,17 @@ export default function ThinkingNode({ id, data = {} }) {
                           lineHeight: "130%",
                           textAlign: "center",
                           color: "rgba(93, 107, 110, 0.8)",
-                          opacity: sourceLabel === "Memory" ? 0.9 : 1,
+                          opacity: topicTag === "Memory" ? 0.9 : 1,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                         }}
                       >
-                        {sourceLabel}
+                        {topicTag}
                       </span>
                     </div>
 
-                    {/* Tag 3 (Phase) */}
+                    {/* Tag 3 (Job) */}
                     <div
                       style={{
                         display: "flex",
@@ -526,7 +513,7 @@ export default function ThinkingNode({ id, data = {} }) {
                         gap: "6.86px",
                         minWidth: "30px",
                         height: "17px",
-                        backgroundColor: phaseLabel === "Idea" ? "#FFD7FE" : phaseBg,
+                        backgroundColor: jobTagMeta.bg,
                         borderRadius: "9.17845px",
                         flex: "none",
                         order: 2,
@@ -548,7 +535,7 @@ export default function ThinkingNode({ id, data = {} }) {
                           justifyContent: "center",
                         }}
                       >
-                        {phaseLabel}
+                        {jobTag}
                       </span>
                     </div>
                   </div>
