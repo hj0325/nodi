@@ -20,6 +20,65 @@ export default function IdeaGroupNode({ id, data, selected }) {
 
   const isRaw = mode === "raw";
 
+  if (!isRaw) {
+    // Elegant, minimalist background container as shown in the second image
+    return (
+      <div
+        className={`relative h-full w-full rounded-[24px] border ${
+          selected ? "border-teal-300/80 ring-2 ring-teal-200/40" : "border-[#CBD5E1]/60"
+        } bg-[#E2E8F0]/30 shadow-[0_12px_28px_rgba(0,0,0,0.05),inset_1px_1px_0px_rgba(255,255,255,0.5)] backdrop-blur-[6px]`}
+      >
+        {/* Active Toggle Switch in Top-Left overlapping top edge */}
+        <div className="absolute left-6 top-0 -translate-y-1/2 z-[20] flex items-center">
+          <div
+            style={{
+              width: "43px",
+              height: "22.76px",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "flex-start",
+                padding: "3.37255px 2.52941px 21.9216px", // Active: circle is on the left
+                gap: "8.43px",
+                width: "22.76px",
+                height: "43px",
+                background: "rgba(255, 255, 255, 0.61)",
+                border: "0.843137px solid #FFFFFF",
+                borderRadius: "30.0831px",
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-50%, -50%) rotate(-90deg)",
+              }}
+            >
+              {/* Ellipse 173 */}
+              <div
+                style={{
+                  width: "17.71px",
+                  height: "17.71px",
+                  borderRadius: "50%",
+                  flex: "none",
+                  flexShrink: 0,
+                  background: "#62B8AA",
+                  boxShadow: "inset -0.843137px -1.68627px 3.20392px rgba(98, 98, 98, 0.25), inset 0px 3.37255px 2.52941px rgba(255, 255, 255, 0.26)",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Invisible handles so connector edges can anchor to groups if needed */}
+        <Handle id="right-source" type="source" position={Position.Right} style={{ ...HANDLE_STYLE }} isConnectable={false} />
+        <Handle id="left-target" type="target" position={Position.Left} style={{ ...HANDLE_STYLE }} isConnectable={false} />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`relative h-full w-full rounded-[24px] border ${

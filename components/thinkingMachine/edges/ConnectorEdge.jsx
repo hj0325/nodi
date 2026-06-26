@@ -300,8 +300,8 @@ export default function ConnectorEdge({
   data,
   selected,
 }) {
-  const sourceOffsetY = toFiniteNumber(data?.sourceOffsetY, 0);
-  const targetOffsetY = toFiniteNumber(data?.targetOffsetY, 0);
+  const sourceOffsetY = 0;
+  const targetOffsetY = 0;
   const alignmentMeta = getAlignmentVisualMeta(data?.alignmentState);
   const lineWidth = toFiniteNumber(data?.lineWidth, DEFAULT_LINE_WIDTH);
   const lineDash = data?.isContinuation ? "5 5" : (data?.alignmentLineDash || alignmentMeta.lineDash);
@@ -309,8 +309,8 @@ export default function ConnectorEdge({
   // 드래그 중 서브픽셀 변동으로 경로 후보가 바뀌며 라벨·선이 떨리는 것을 줄임
   const sx = Math.round(sourceX);
   const tx = Math.round(targetX);
-  const sy = Math.round(sourceY + sourceOffsetY);
-  const ty = Math.round(targetY + targetOffsetY);
+  const sy = Math.round(sourceY);
+  const ty = Math.round(targetY);
 
   const dx = tx - sx;
   const controlDistance = Math.max(Math.abs(dx) * 0.45, 40);
@@ -318,8 +318,9 @@ export default function ConnectorEdge({
 
   const startPoint = { x: sx, y: sy };
   const endPoint = { x: tx, y: ty };
-  const label = typeof data?.label === "string" ? data.label.replace(/_/g, " ") : "";
-  const alignmentLabel = typeof data?.alignmentLabel === "string" ? data.alignmentLabel : alignmentMeta.label;
+  // 연결 선 사이에 단어 적는거 제외 (Empty label to prevent rendering)
+  const label = "";
+  const alignmentLabel = "";
 
   const labelAnchor = getBezierMidpoint(sx, sy, tx, ty, controlDistance);
   const labelX = Math.round(labelAnchor.x);
@@ -339,7 +340,14 @@ export default function ConnectorEdge({
   return (
     <g className={`tm-connector-edge ${isSelected ? "is-selected" : ""}`}>
       <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient
+          id={gradientId}
+          gradientUnits="userSpaceOnUse"
+          x1={sx}
+          y1={sy}
+          x2={tx}
+          y2={ty}
+        >
           <stop offset="0%" stopColor="#41D9D2" />
           <stop offset="100%" stopColor="#BAFFE2" />
         </linearGradient>
@@ -370,38 +378,6 @@ export default function ConnectorEdge({
             : "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.08))",
           strokeDasharray: lineDash,
         }}
-      />
-      
-      {/* Start Point Donut Ring */}
-      <circle
-        cx={startPoint.x}
-        cy={startPoint.y}
-        r={3.8}
-        fill="#FFFFFF"
-        stroke={startDotColor}
-        strokeWidth="1.6"
-      />
-      <circle
-        cx={startPoint.x}
-        cy={startPoint.y}
-        r={1.3}
-        fill={startDotColor}
-      />
-
-      {/* End Point Donut Ring */}
-      <circle
-        cx={endPoint.x}
-        cy={endPoint.y}
-        r={3.8}
-        fill="#FFFFFF"
-        stroke={endDotColor}
-        strokeWidth="1.6"
-      />
-      <circle
-        cx={endPoint.x}
-        cy={endPoint.y}
-        r={1.3}
-        fill={endDotColor}
       />
 
       {label || alignmentLabel ? (

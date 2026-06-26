@@ -14,6 +14,7 @@ import {
   hydrateProjectNodes,
   serializeProjectGraph,
 } from "@/lib/thinkingMachine/projectGraph";
+import { toConnectorEdges } from "@/lib/thinkingMachine/connectorEdges";
 
 export function useProjectGraphSync({
   projectId,
@@ -50,7 +51,8 @@ export function useProjectGraphSync({
         const payload = await fetchProjectGraph(projectId);
         if (cancelled) return;
         const hydratedNodes = hydrateProjectNodes(payload?.graph?.nodes || []);
-        const hydratedEdges = hydrateProjectEdges(payload?.graph?.edges || []);
+        const rawEdges = hydrateProjectEdges(payload?.graph?.edges || []);
+        const hydratedEdges = toConnectorEdges(rawEdges, hydratedNodes);
         const nextStage = payload?.graph?.stage || "research-diverge";
         const nextMeetingMemory = payload?.meetingMemory || getDefaultMeetingMemory();
         setNodes(hydratedNodes);
