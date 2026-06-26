@@ -189,17 +189,27 @@ export default function Home() {
         >
           {/* Visual node Program Pill (Frame 1410167826) */}
           <div
-            className="flex flex-col items-start justify-center"
+            className="flex flex-col items-start justify-center relative overflow-hidden"
             style={{
               width: "172.8px",
               height: "30.4px",
               padding: "7.2px 16px 8px",
-              background: "rgba(255, 255, 255, 0.32)",
               borderRadius: "17px",
+              boxShadow: "0 4px 10px rgba(13, 48, 64, 0.03), inset 1px 1px 0px rgba(255, 255, 255, 0.4)",
             }}
           >
+            {/* Glassmorphism layers */}
+            <div 
+              className="absolute inset-0 z-0 pointer-events-none" 
+              style={{
+                backdropFilter: "blur(4px)",
+                background: "rgba(255, 255, 255, 0.25)",
+                boxShadow: "inset 1px 1px 0px rgba(255, 255, 255, 0.75), inset 0 0 5px rgba(255, 255, 255, 0.75)",
+              }}
+            />
+
             <div
-              className="flex flex-row items-end"
+              className="flex flex-row items-end relative z-10"
               style={{
                 width: "141px",
                 height: "15.2px",
@@ -211,7 +221,7 @@ export default function Home() {
                 style={{
                   width: "13.7px",
                   height: "15px",
-                  color: "#576E78",
+                  color: "#4C656F",
                 }}
               />
               {/* Text */}
@@ -225,7 +235,7 @@ export default function Home() {
                   fontSize: "12.8px",
                   lineHeight: "15.2px",
                   textAlign: "center",
-                  color: "#576E78",
+                  color: "#4C656F",
                 }}
               >
                 Visual node Program
@@ -793,18 +803,28 @@ export default function Home() {
           {/* Navigation Controls (Frame 1410167855 - Hidden in Portrait Mode) */}
           {!isPortrait && (
             <div
-              className="flex flex-col justify-center items-center"
+              className="flex flex-col justify-center items-center relative overflow-hidden"
               style={{
                 width: "109.6px",
                 height: "36px",
-                background: "rgba(255, 255, 255, 0.36)",
                 borderRadius: "24px",
                 padding: "9.6px 12px 10.4px",
+                boxShadow: "0 4px 10px rgba(13, 48, 64, 0.03), inset 1px 1px 0px rgba(255, 255, 255, 0.4)",
               }}
             >
+              {/* Glassmorphism layers */}
+              <div 
+                className="absolute inset-0 z-0 pointer-events-none" 
+                style={{
+                  backdropFilter: "blur(4px)",
+                  background: "rgba(255, 255, 255, 0.25)",
+                  boxShadow: "inset 1px 1px 0px rgba(255, 255, 255, 0.75), inset 0 0 5px rgba(255, 255, 255, 0.75)",
+                }}
+              />
+
               {/* Frame 1410167854 */}
               <div
-                className="flex flex-row justify-between items-center"
+                className="flex flex-row justify-between items-center relative z-10"
                 style={{
                   width: "85.6px",
                   height: "21.6px",
@@ -846,7 +866,7 @@ export default function Home() {
                   style={{
                     width: "1px",
                     height: "21.6px",
-                    background: "#C3CFD4",
+                    background: "rgba(13, 48, 64, 0.15)",
                   }}
                 />
 
