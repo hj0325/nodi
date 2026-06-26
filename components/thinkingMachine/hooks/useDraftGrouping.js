@@ -26,6 +26,7 @@ export function useDraftGrouping({
   stage = "research-diverge",
   currentUserId = "mock-user-1",
   currentUserName = "You",
+  meetingState = "ended",
 } = {}) {
   const [selectedDraftIds, setSelectedDraftIds] = useState([]);
   const [showDraftConvertPrompt, setShowDraftConvertPrompt] = useState(false);
@@ -246,7 +247,7 @@ export function useDraftGrouping({
             data: { title: n.data.title, category: n.data.category, phase: n.data.phase },
             position: n.position,
           }));
-        const payload = { text: bundleText, history, stage };
+        const payload = { text: bundleText, history, stage, meetingState };
         const data = await analyze(payload);
 
         const suggestionNodeData = data.nodes.find((n) => n.data.is_ai_generated);
@@ -401,7 +402,7 @@ export function useDraftGrouping({
         });
       }
     },
-    [currentUserId, currentUserName, edges, isAnalyzing, nodes, setEdges, setIsAnalyzing, setNodes, setSuggestions, stage, toggleIdeaGroupMode]
+    [currentUserId, currentUserName, edges, isAnalyzing, nodes, setEdges, setIsAnalyzing, setNodes, setSuggestions, stage, toggleIdeaGroupMode, meetingState]
   );
 
   // Keep a ref to the latest converter so draft nodes never call stale closures.

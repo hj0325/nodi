@@ -190,6 +190,7 @@ export default function ThinkingMachine({
         drawerMode,
         setDrawerMode,
         stage,
+        meetingState,
     });
 
     const handleDrawerModeChange = useCallback((nextMode) => {
@@ -237,6 +238,7 @@ export default function ThinkingMachine({
         stage,
         currentUserId,
         currentUserName,
+        meetingState,
     });
 
     const isChatDropActive = false;

@@ -54,12 +54,16 @@ export function useNodePorts({
 
   const offMeetingByNodeId = useMemo(() => {
     const map = new Map();
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
     nodes.forEach((node) => {
       if (node?.data?.isOffMeeting) map.set(node.id, true);
     });
     edges.forEach((edge) => {
       if (getEdgeContinuationFlag(edge) && edge?.target) {
-        map.set(edge.target, true);
+        const targetNode = nodeMap.get(edge.target);
+        if (targetNode?.data?.isOffMeeting !== false) {
+          map.set(edge.target, true);
+        }
       }
     });
     let changed = true;
@@ -68,8 +72,11 @@ export function useNodePorts({
       edges.forEach((edge) => {
         if (isVerticalConnectorEdge(edge)) return;
         if (map.get(edge.source) && edge?.target && !map.get(edge.target)) {
-          map.set(edge.target, true);
-          changed = true;
+          const targetNode = nodeMap.get(edge.target);
+          if (targetNode?.data?.isOffMeeting !== false) {
+            map.set(edge.target, true);
+            changed = true;
+          }
         }
       });
     }

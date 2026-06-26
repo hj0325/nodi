@@ -10,6 +10,7 @@ export function useDrawerChat({
   drawerMode,
   setDrawerMode,
   stage = "research-diverge",
+  meetingState = "ended",
 } = {}) {
   const [activeSuggestion, setActiveSuggestion] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -153,6 +154,7 @@ export function useDrawerChat({
           position: n.position,
         })),
         stage,
+        meetingState,
       };
       const data = await chatToNodes(payload);
       onPreviewNodesFromChat?.(data);
@@ -167,7 +169,7 @@ export function useDrawerChat({
     } finally {
       setIsChatConverting(false);
     }
-  }, [activeSuggestion, chatMessages, isChatConverting, nodes, onPreviewNodesFromChat, setIsDrawerOpen, stage]);
+  }, [activeSuggestion, chatMessages, isChatConverting, nodes, onPreviewNodesFromChat, setIsDrawerOpen, stage, meetingState]);
 
   const handleDrawerContextSelect = useCallback(
     (item) => {
