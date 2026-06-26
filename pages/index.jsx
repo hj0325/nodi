@@ -320,6 +320,12 @@ export default function Home() {
                   const dx = pEnd.x - pStart.x;
                   const pathD = `M ${pStart.x} ${pStart.y} C ${pStart.x + dx * 0.45} ${pStart.y}, ${pEnd.x - dx * 0.45} ${pEnd.y}, ${pEnd.x} ${pEnd.y}`;
                   
+                  // Calculate connection opacity based on proximity to the active center index
+                  // Proximity to active index: 
+                  // If connection line i is between (i) and (i+1), its distance to activeIndex determines its opacity.
+                  const distToActive = Math.min(Math.abs(i - activeIndex), Math.abs(i + 1 - activeIndex));
+                  const lineOpacity = distToActive === 0 ? 0.9 : (distToActive === 1 ? 0.5 : 0.15);
+
                   return (
                     <motion.path
                       key={`connection-${i}`}
@@ -328,7 +334,7 @@ export default function Home() {
                       stroke="url(#node-line-gradient)"
                       strokeWidth="3"
                       strokeLinecap="round"
-                      animate={{ d: pathD }}
+                      animate={{ d: pathD, opacity: lineOpacity }}
                       transition={{ type: "spring", stiffness: 260, damping: 26 }}
                     />
                   );
@@ -385,13 +391,13 @@ export default function Home() {
                 // Landscape dynamic sizing (Scaled by 0.8)
                 cardWidth = isActive ? 253 : (distance === 1 ? 221.6 : 183.8);
                 cardHeight = isActive ? 289.6 : (distance === 1 ? 253.6 : 210.4);
-                cardOpacity = isActive ? 1 : (distance === 1 ? 0.75 : 0.38);
+                
                 cardRadius = isActive ? "27.4px" : (distance === 1 ? "24px" : "19.9px");
                 cardShadow = isActive
                   ? "0px 20.1px 51.8px rgba(114, 114, 114, 0.21)"
                   : (distance === 1
-                    ? "0px 17.6px 45.4px rgba(114, 114, 114, 0.14)"
-                    : "0px 14.6px 37.6px rgba(114, 114, 114, 0.14)");
+                    ? "0px 17.6px 45.4px rgba(114, 114, 114, 0.10)"
+                    : "0px 14.6px 37.6px rgba(114, 114, 114, 0.04)");
                 cardPadding = isActive
                   ? "9.1px 9.1px 11.9px"
                   : (distance === 1 ? "8px 8px 10.4px" : "6.6px 6.6px 8.6px");
@@ -451,7 +457,7 @@ export default function Home() {
                   animate={
                     isPortrait 
                       ? { scale: isActive ? 1.03 : 1, y: 0 }
-                      : { width: cardWidth, height: cardHeight, opacity: 1 }
+                      : { width: cardWidth, height: cardHeight, opacity: isActive ? 1.0 : (distance === 1 ? 0.70 : 0.35) }
                   }
                   transition={{ type: "spring", stiffness: 260, damping: 26 }}
                   style={{
@@ -584,7 +590,6 @@ export default function Home() {
                       width: "100%",
                       height: "100%",
                       gap: cardGap,
-                      opacity: isPortrait ? 1 : cardOpacity,
                     }}
                   >
                     {/* Frame 1410167836 (Main Content Block) */}
