@@ -97,8 +97,34 @@ export default function Home() {
     void router.push(`/projects/${projectId}`);
   };
 
+  // Dynamic port coordinate calculation for SVG curved lines
+  const getCardSize = (i) => {
+    const isActive = i === activeIndex;
+    const distance = Math.abs(i - activeIndex);
+    const w = isActive ? 253 : (distance === 1 ? 221.6 : 183.8);
+    const h = isActive ? 289.6 : (distance === 1 ? 253.6 : 210.4);
+    return { w, h };
+  };
+
+  const totalWidth = Array.from({ length: 5 }, (_, i) => getCardSize(i).w).reduce((sum, w) => sum + w, 0) + 4 * 16;
+  const xStart = (1128 - totalWidth) / 2;
+
+  const ports = [];
+  let currentX = xStart;
+  for (let i = 0; i < 5; i++) {
+    const { w, h } = getCardSize(i);
+    const yTop = (289.6 - h) / 2;
+    const yPort = yTop + 64; // Local 64px matches top of title text area
+
+    ports.push({
+      left: { x: currentX, y: yPort },
+      right: { x: currentX + w, y: yPort }
+    });
+    currentX += w + 16;
+  }
+
   return (
-    <main className={`relative min-h-screen ${isPortrait ? "overflow-y-auto pb-24" : "overflow-hidden"} bg-[#D5E4E6] text-slate-900 flex flex-col justify-start py-12 px-6`}>
+    <main className={`relative h-screen overflow-y-auto overflow-x-hidden bg-[#D5E4E6] text-slate-900 flex flex-col justify-start py-12 px-6`}>
       {/* Background elements */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-[#D5E4E6]" />
       <div className="pointer-events-none absolute inset-0 z-8 opacity-45">
@@ -269,9 +295,35 @@ export default function Home() {
           >
             {/* Background line (Horizontal for landscape, Vertical for portrait) */}
             {isPortrait ? (
-              <div className="absolute top-0 bottom-0 left-1/2 w-[1px] border-l border-dashed border-[#7BA592]/30 z-0" />
+              <div className="absolute top-0 bottom-0 left-1/2 w-[1px] border-l border-dashed border-[#6FB1BD]/40 z-0" />
             ) : (
-              <div className="absolute left-0 right-0 top-1/2 h-[1px] border-t border-dashed border-[#7BA592]/30 z-0" />
+              <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{ overflow: "visible" }}>
+                <defs>
+                  <linearGradient id="node-line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#41D9D2" />
+                    <stop offset="100%" stopColor="#BAFFE2" />
+                  </linearGradient>
+                </defs>
+                {Array.from({ length: 4 }).map((_, i) => {
+                  const pStart = ports[i].right;
+                  const pEnd = ports[i+1].left;
+                  const dx = pEnd.x - pStart.x;
+                  const pathD = `M ${pStart.x} ${pStart.y} C ${pStart.x + dx * 0.45} ${pStart.y}, ${pEnd.x - dx * 0.45} ${pEnd.y}, ${pEnd.x} ${pEnd.y}`;
+                  
+                  return (
+                    <motion.path
+                      key={`connection-${i}`}
+                      d={pathD}
+                      fill="none"
+                      stroke="url(#node-line-gradient)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      animate={{ d: pathD }}
+                      transition={{ type: "spring", stiffness: 260, damping: 26 }}
+                    />
+                  );
+                })}
+              </svg>
             )}
 
             {SEEDED_PROJECTS.map((project, idx) => {
@@ -368,14 +420,28 @@ export default function Home() {
                   key={project.id}
                   onClick={() => {
                     console.log("Card clicked:", project.id, "isActive:", isActive);
-                    handleEnterProject(project.id);
+                    if (isActive) {
+                      handleEnterProject(project.id);
+                    } else {
+                      setActiveIndex(idx);
+                    }
                   }}
-                  onMouseEnter={() => isPortrait && setHoveredIndex(idx)}
-                  onMouseLeave={() => isPortrait && setHoveredIndex(null)}
+                  onMouseEnter={() => {
+                    if (isPortrait) {
+                      setHoveredIndex(idx);
+                    } else {
+                      setActiveIndex(idx);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (isPortrait) {
+                      setHoveredIndex(null);
+                    }
+                  }}
                   animate={
                     isPortrait 
                       ? { scale: isActive ? 1.03 : 1, y: 0 }
-                      : { width: cardWidth, height: cardHeight, opacity: cardOpacity }
+                      : { width: cardWidth, height: cardHeight, opacity: 1 }
                   }
                   transition={{ type: "spring", stiffness: 260, damping: 26 }}
                   style={{
@@ -397,13 +463,29 @@ export default function Home() {
                   {/* Connector dots (Top/Bottom for Portrait, Left/Right for Landscape) */}
                   {isPortrait ? (
                     <>
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#7BA592]/50 border border-white" />
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 rounded-full bg-[#7BA592]/50 border border-white" />
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full bg-[#6FB1BD] border-2 border-white shadow-sm" />
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[10px] h-[10px] rounded-full bg-[#6FB1BD] border-2 border-white shadow-sm" />
                     </>
                   ) : (
                     <>
-                      <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#7BA592]/50 border border-white" />
-                      <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#7BA592]/50 border border-white" />
+                      {/* Left Port */}
+                      <div 
+                        className="absolute left-0 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20" 
+                        style={{ top: "64px" }}
+                      >
+                        <div className="w-[18px] h-[18px] rounded-full bg-white border border-[#41D9D2]/20 shadow-sm flex items-center justify-center">
+                          <div className="w-[10px] h-[10px] rounded-full bg-[#41D9D2] border-[2px] border-white shadow-[0_1px_2px_rgba(0,0,0,0.1)]" />
+                        </div>
+                      </div>
+                      {/* Right Port */}
+                      <div 
+                        className="absolute right-0 translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20" 
+                        style={{ top: "64px" }}
+                      >
+                        <div className="w-[18px] h-[18px] rounded-full bg-white border border-[#41D9D2]/20 shadow-sm flex items-center justify-center">
+                          <div className="w-[10px] h-[10px] rounded-full bg-[#41D9D2] border-[2px] border-white shadow-[0_1px_2px_rgba(0,0,0,0.1)]" />
+                        </div>
+                      </div>
                     </>
                   )}
 
@@ -414,6 +496,7 @@ export default function Home() {
                       width: "100%",
                       height: "100%",
                       gap: cardGap,
+                      opacity: isPortrait ? 1 : cardOpacity,
                     }}
                   >
                     {/* Frame 1410167836 (Main Content Block) */}
