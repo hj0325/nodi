@@ -30,22 +30,27 @@ function getPortColor(category) {
   return getTypeMeta(normalizeNodeCategory(category)).color;
 }
 
-function AnchorPortRing() {
+function AnchorPortRing({ isOffMeeting }) {
   return (
-    <div className="relative flex h-[8.9px] w-[8.9px] items-center justify-center rounded-full bg-[#A0D2E7]">
+    <div
+      className="relative flex h-[8.9px] w-[8.9px] items-center justify-center rounded-full"
+      style={{
+        backgroundColor: isOffMeeting ? "#C8D0F5" : "#A0D2E7",
+      }}
+    >
       <div className="h-[4.45px] w-[4.45px] rounded-full bg-white" />
     </div>
   );
 }
 
-function AnchorPort({ side }) {
+function AnchorPort({ side, isOffMeeting }) {
   if (side === "top") {
     return (
       <div
         className="pointer-events-none absolute left-1/2 top-[-7.23px] z-[40] flex h-[14.46px] w-[14.46px] -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
         aria-hidden
       >
-        <AnchorPortRing />
+        <AnchorPortRing isOffMeeting={isOffMeeting} />
       </div>
     );
   }
@@ -56,7 +61,7 @@ function AnchorPort({ side }) {
         className="pointer-events-none absolute bottom-[-7.23px] left-1/2 z-[40] flex h-[14.46px] w-[14.46px] -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
         aria-hidden
       >
-        <AnchorPortRing />
+        <AnchorPortRing isOffMeeting={isOffMeeting} />
       </div>
     );
   }
@@ -69,7 +74,7 @@ function AnchorPort({ side }) {
       style={{ top: `${NODE_PORT_LAYOUT.sidePortY}px`, transform: "translateY(-50%)" }}
       aria-hidden
     >
-      <AnchorPortRing />
+      <AnchorPortRing isOffMeeting={isOffMeeting} />
     </div>
   );
 }
@@ -94,7 +99,7 @@ function highlightSpeechPhrase(text, phrase = ORIGINAL_SPEECH_HIGHLIGHT_PHRASE) 
   );
 }
 
-function RefinedNodeSummary({ title, content }) {
+function RefinedNodeSummary({ title, content, isOffMeeting }) {
   return (
     <div
       style={{
@@ -114,7 +119,7 @@ function RefinedNodeSummary({ title, content }) {
           fontFamily: "'Pretendard Variable', sans-serif",
           fontSize: "12px",
           lineHeight: "130%",
-          color: "#34849C",
+          color: isOffMeeting ? "#7280C4" : "#34849C",
         }}
       >
         {title}
@@ -318,8 +323,12 @@ export default function ThinkingNode({ id, data = {} }) {
             width: "257px",
             minHeight: showingOriginal ? "198px" : "165px",
             height: showingOriginal ? "auto" : "165px",
-            background: "linear-gradient(249.98deg, rgba(179, 236, 236, 0.12) -3.67%, rgba(168, 255, 208, 0.0708) 95.87%)",
-            border: "0.843545px solid #CDE9E9",
+            background: data.isOffMeeting
+              ? "linear-gradient(249.98deg, rgba(148, 177, 255, 0.08) -3.67%, rgba(103, 115, 244, 0.045) 95.87%)"
+              : "linear-gradient(249.98deg, rgba(179, 236, 236, 0.12) -3.67%, rgba(168, 255, 208, 0.0708) 95.87%)",
+            border: data.isOffMeeting
+              ? "0.843545px solid #E0E4FA"
+              : "0.843545px solid #CDE9E9",
             boxShadow: "0.562363px 0.562363px 11.2473px 0.631499px rgba(171,171,171,0.3)",
             borderRadius: "12.2695px",
             flex: "none",
@@ -328,8 +337,8 @@ export default function ThinkingNode({ id, data = {} }) {
             flexGrow: 0,
           }}
         >
-          {hasTopPort ? <AnchorPort side="top" /> : null}
-          {hasBottomPort ? <AnchorPort side="bottom" /> : null}
+          {hasTopPort ? <AnchorPort side="top" isOffMeeting={data.isOffMeeting} /> : null}
+          {hasBottomPort ? <AnchorPort side="bottom" isOffMeeting={data.isOffMeeting} /> : null}
           {hasTopPort ? (
             <Handle
               id="top-target"
@@ -412,7 +421,7 @@ export default function ThinkingNode({ id, data = {} }) {
                     fontSize: "11px",
                     lineHeight: "180%",
                     textAlign: "center",
-                    color: "#2C6068",
+                    color: data.isOffMeeting ? "#525A80" : "#2C6068",
                     flex: "none",
                     order: 0,
                     flexGrow: 0,
@@ -528,7 +537,7 @@ export default function ThinkingNode({ id, data = {} }) {
                           fontStyle: "normal",
                           fontSize: "12px",
                           lineHeight: "130%",
-                          color: "#34849C",
+                          color: data.isOffMeeting ? "#7280C4" : "#34849C",
                           flex: "none",
                           order: 0,
                           alignSelf: "stretch",
@@ -540,7 +549,7 @@ export default function ThinkingNode({ id, data = {} }) {
                       <OriginalSpeechContent content={originalContent} />
                     </>
                   ) : (
-                    <RefinedNodeSummary title={displayTitle} content={refinedContent} />
+                    <RefinedNodeSummary title={displayTitle} content={refinedContent} isOffMeeting={data.isOffMeeting} />
                   )}
                 </div>
 
@@ -681,8 +690,8 @@ export default function ThinkingNode({ id, data = {} }) {
         </div>
       </div>
 
-      {hasLeftPort ? <AnchorPort side="left" /> : null}
-      {hasRightPort ? <AnchorPort side="right" /> : null}
+      {hasLeftPort ? <AnchorPort side="left" isOffMeeting={data.isOffMeeting} /> : null}
+      {hasRightPort ? <AnchorPort side="right" isOffMeeting={data.isOffMeeting} /> : null}
       <Handle
         id="right-source"
         type="source"

@@ -593,8 +593,8 @@ export default function ThinkingMachine({
         [edges, nodes]
     );
     const decoratedCanvasEdges = useMemo(
-        () => decorateConnectorEdges(canvasEdges, reasoningAlignmentAnalysis),
-        [canvasEdges, reasoningAlignmentAnalysis]
+        () => decorateConnectorEdges(canvasEdges, reasoningAlignmentAnalysis, canvasNodes),
+        [canvasEdges, canvasNodes, reasoningAlignmentAnalysis]
     );
     const alignmentSummary = reasoningAlignmentAnalysis?.selectedSummary || {
         counts: reasoningAlignmentAnalysis?.counts || {},
@@ -801,6 +801,17 @@ export default function ThinkingMachine({
     const silenceTimeoutRef = useRef(null);
     const transcriptBufferRef = useRef("");
 
+    // 최신 콜백과 상태값을 참조하기 위한 ref 정의 (의존성 변화로 인한 무한 리셋 방지)
+    const handleMeetingCaptureSubmitRef = useRef(handleMeetingCaptureSubmit);
+    useEffect(() => {
+        handleMeetingCaptureSubmitRef.current = handleMeetingCaptureSubmit;
+    }, [handleMeetingCaptureSubmit]);
+
+    const isListeningRef = useRef(isListening);
+    useEffect(() => {
+        isListeningRef.current = isListening;
+    }, [isListening]);
+
     useEffect(() => {
         let timerId;
         if (meetingState === "active") {
@@ -814,7 +825,13 @@ export default function ThinkingMachine({
     useEffect(() => {
         if (typeof window === "undefined") return;
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
+        if (!SpeechRecognition) {
+            if (isListening) {
+                alert("이 브라우저에서는 음성 인식을 지원하지 않습니다. Chrome 브라우저를 사용해 주세요.");
+                setIsListening(false);
+            }
+            return;
+        }
 
         const rec = new SpeechRecognition();
         rec.continuous = true;
@@ -846,7 +863,7 @@ export default function ThinkingMachine({
                 const textToSubmit = transcriptBufferRef.current.trim();
                 if (textToSubmit) {
                     console.log("Auto-submitting STT transcript due to silence:", textToSubmit);
-                    void handleMeetingCaptureSubmit(textToSubmit);
+                    void handleMeetingCaptureSubmitRef.current(textToSubmit);
                     transcriptBufferRef.current = "";
                     setSttTranscript("");
                     setInterimTranscript("");
@@ -855,7 +872,7 @@ export default function ThinkingMachine({
         };
 
         rec.onend = () => {
-            if (isListening) {
+            if (isListeningRef.current) {
                 try {
                     rec.start();
                 } catch (e) {
@@ -866,36 +883,55 @@ export default function ThinkingMachine({
 
         rec.onerror = (e) => {
             console.error("Speech recognition error:", e);
+            if (e.error === "no-speech" || e.error === "aborted") {
+                return;
+            }
+            
+            if (e.error === "not-allowed") {
+                alert("음성 인식 권한이 차단되었거나, 보안 연결(HTTPS 또는 localhost)이 아닙니다.\n\n해결 방법:\n1. 로컬 환경에서 테스트 중이시라면 주소가 http://localhost:3000 인지 확인해 주세요 (IP 주소로 접속 시 크롬 브라우저는 보안상 마이크를 차단합니다).\n2. 브라우저 주소창 왼쪽의 자물쇠/마이크 아이콘을 클릭하여 마이크 권한을 '허용'으로 변경해 주세요.");
+            } else if (e.error === "audio-capture") {
+                alert("사용 가능한 마이크 하드웨어를 찾을 수 없습니다. 마이크 연결을 확인해 주세요.");
+            } else if (e.error === "network") {
+                alert("STT 음성 인식 네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.");
+            } else {
+                alert(`음성 인식 오류가 발생했습니다: ${e.error}`);
+            }
+            setIsListening(false);
         };
 
         recognitionRef.current = rec;
 
-        return () => {
-            if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
-            rec.stop();
-        };
-    }, [isListening, handleMeetingCaptureSubmit]);
-
-    useEffect(() => {
-        if (!recognitionRef.current) return;
         if (isListening) {
             try {
-                recognitionRef.current.start();
+                rec.start();
             } catch (e) {
                 console.error("Failed to start speech recognition:", e);
             }
         } else {
-            recognitionRef.current.stop();
-            if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+            }
             const textToSubmit = transcriptBufferRef.current.trim();
             if (textToSubmit) {
-                void handleMeetingCaptureSubmit(textToSubmit);
+                console.log("Submitting leftover STT transcript on stop listening:", textToSubmit);
+                void handleMeetingCaptureSubmitRef.current(textToSubmit);
                 transcriptBufferRef.current = "";
                 setSttTranscript("");
                 setInterimTranscript("");
             }
         }
-    }, [isListening, handleMeetingCaptureSubmit]);
+
+        return () => {
+            if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+            }
+            try {
+                rec.stop();
+            } catch (e) {
+                // 이미 종료된 마이크 리소스 제어 에러 방지
+            }
+        };
+    }, [isListening]);
 
     // 우측 Drawer 하단 입력창 동작:
     // - 기본(컨텍스트 없음)일 때: 사용자 입력을 기반으로 /api/analyze 를 호출해 새 노드 + 제안 생성

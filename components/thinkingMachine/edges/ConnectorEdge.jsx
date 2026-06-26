@@ -341,12 +341,29 @@ export default function ConnectorEdge({
   const isSelected = Boolean(selected);
   const underlayStroke = isSelected ? "rgba(255, 255, 255, 0.24)" : "rgba(255, 255, 255, 0.12)";
   
+  const sourceIsOffMeeting = Boolean(data?.sourceIsOffMeeting);
+  const targetIsOffMeeting = Boolean(data?.targetIsOffMeeting);
+
+  let startColor = "#41D9D2";
+  let endColor = "#BAFFE2";
+
+  if (sourceIsOffMeeting && targetIsOffMeeting) {
+    startColor = "#94B1FF";
+    endColor = "#6773F4";
+  } else if (sourceIsOffMeeting && !targetIsOffMeeting) {
+    startColor = "#94B1FF";
+    endColor = "#41D9D2";
+  } else if (!sourceIsOffMeeting && targetIsOffMeeting) {
+    startColor = "#41D9D2";
+    endColor = "#94B1FF";
+  }
+
   const gradientId = `gradient-${id}`;
   const primaryStroke = isSelected ? "rgba(255, 255, 255, 0.92)" : `url(#${gradientId})`;
-  const startDotColor = isSelected ? "rgba(255, 255, 255, 0.92)" : "#41D9D2";
-  const endDotColor = isSelected ? "rgba(255, 255, 255, 0.92)" : "#BAFFE2";
+  const startDotColor = isSelected ? "rgba(255, 255, 255, 0.92)" : startColor;
+  const endDotColor = isSelected ? "rgba(255, 255, 255, 0.92)" : endColor;
 
-  const primaryWidth = isSelected ? lineWidth + 0.4 : 2.5;
+  const primaryWidth = isSelected ? lineWidth + 0.4 : 1.3;
 
   return (
     <g className={`tm-connector-edge ${isSelected ? "is-selected" : ""}`}>
@@ -359,8 +376,8 @@ export default function ConnectorEdge({
           x2={tx}
           y2={ty}
         >
-          <stop offset="0%" stopColor="#41D9D2" />
-          <stop offset="100%" stopColor="#BAFFE2" />
+          <stop offset="0%" stopColor={startColor} />
+          <stop offset="100%" stopColor={endColor} />
         </linearGradient>
       </defs>
       <BaseEdge

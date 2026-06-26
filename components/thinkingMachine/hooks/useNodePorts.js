@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { isVerticalConnectorEdge } from "@/lib/thinkingMachine/connectorEdges";
+import { getEdgeContinuationFlag, isVerticalConnectorEdge } from "@/lib/thinkingMachine/connectorEdges";
 
 export function useNodePorts({
   nodes,
@@ -52,6 +52,30 @@ export function useNodePorts({
     return map;
   }, [edges]);
 
+  const offMeetingByNodeId = useMemo(() => {
+    const map = new Map();
+    nodes.forEach((node) => {
+      if (node?.data?.isOffMeeting) map.set(node.id, true);
+    });
+    edges.forEach((edge) => {
+      if (getEdgeContinuationFlag(edge) && edge?.target) {
+        map.set(edge.target, true);
+      }
+    });
+    let changed = true;
+    while (changed) {
+      changed = false;
+      edges.forEach((edge) => {
+        if (isVerticalConnectorEdge(edge)) return;
+        if (map.get(edge.source) && edge?.target && !map.get(edge.target)) {
+          map.set(edge.target, true);
+          changed = true;
+        }
+      });
+    }
+    return map;
+  }, [edges, nodes]);
+
   const displayNodes = useMemo(() => {
     const hasHighlightSet = highlightedNodeIds instanceof Set;
     return nodes.map((n) => ({
@@ -86,6 +110,7 @@ export function useNodePorts({
           ? {
               id: n.id,
               nodeId: n.id,
+              isOffMeeting: Boolean(offMeetingByNodeId.get(n.id) || n.data?.isOffMeeting),
               conflictLinkedNodeTitles: conflictByNodeId?.[n.id]?.linkedNodeTitles || [],
               conflictExplanation: conflictExplainResultByNodeId?.[n.id] || null,
               isConflictPopoverOpen: openConflictNodeId === n.id,
@@ -107,6 +132,7 @@ export function useNodePorts({
     draftSubmittingIds,
     highlightedNodeIds,
     nodes,
+    offMeetingByNodeId,
     onExplainConflict,
     onToggleConflictPopover,
     openConflictNodeId,
