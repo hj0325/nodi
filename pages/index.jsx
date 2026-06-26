@@ -114,7 +114,7 @@ export default function Home() {
   for (let i = 0; i < 5; i++) {
     const { w, h } = getCardSize(i);
     const yTop = (289.6 - h) / 2;
-    const yPort = yTop + 64; // Local 64px matches top of title text area
+    const yPort = yTop + 36; // Local 36px matches closer to upper part of title section
 
     ports.push({
       left: { x: currentX, y: yPort },
@@ -468,24 +468,102 @@ export default function Home() {
                     </>
                   ) : (
                     <>
-                      {/* Left Port */}
-                      <div 
-                        className="absolute left-0 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20" 
-                        style={{ top: "64px" }}
-                      >
-                        <div className="w-[18px] h-[18px] rounded-full bg-white border border-[#41D9D2]/20 shadow-sm flex items-center justify-center">
-                          <div className="w-[10px] h-[10px] rounded-full bg-[#41D9D2] border-[2px] border-white shadow-[0_1px_2px_rgba(0,0,0,0.1)]" />
+                      {/* Left Port (Hide on index 0 - outermost left) */}
+                      {idx > 0 && (
+                        <div 
+                          className="absolute left-0 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20" 
+                          style={{ top: "36px" }}
+                        >
+                          <div 
+                            className="flex flex-row justify-between items-start isolation-isolate relative"
+                            style={{
+                              width: "14.46px",
+                              height: "14.46px",
+                              padding: "2.77989px",
+                              gap: "5.56px",
+                              background: "#FFFFFF",
+                              borderRadius: "7.2277px",
+                              boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)"
+                            }}
+                          >
+                            <div 
+                              style={{
+                                width: "8.9px",
+                                height: "8.9px",
+                                background: "#A0D2E7",
+                                borderRadius: "50%",
+                                flex: "none",
+                                order: 0,
+                                flexGrow: 0,
+                                zIndex: 0
+                              }}
+                            />
+                            <div 
+                              style={{
+                                position: "absolute",
+                                width: "4.45px",
+                                height: "4.45px",
+                                left: "5px",
+                                top: "5px",
+                                background: "#FFFFFF",
+                                borderRadius: "50%",
+                                flex: "none",
+                                order: 1,
+                                flexGrow: 0,
+                                zIndex: 1
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      {/* Right Port */}
-                      <div 
-                        className="absolute right-0 translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20" 
-                        style={{ top: "64px" }}
-                      >
-                        <div className="w-[18px] h-[18px] rounded-full bg-white border border-[#41D9D2]/20 shadow-sm flex items-center justify-center">
-                          <div className="w-[10px] h-[10px] rounded-full bg-[#41D9D2] border-[2px] border-white shadow-[0_1px_2px_rgba(0,0,0,0.1)]" />
+                      )}
+                      {/* Right Port (Hide on index 4 - outermost right) */}
+                      {idx < 4 && (
+                        <div 
+                          className="absolute right-0 translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-20" 
+                          style={{ top: "36px" }}
+                        >
+                          <div 
+                            className="flex flex-row justify-between items-start isolation-isolate relative"
+                            style={{
+                              width: "14.46px",
+                              height: "14.46px",
+                              padding: "2.77989px",
+                              gap: "5.56px",
+                              background: "#FFFFFF",
+                              borderRadius: "7.2277px",
+                              boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)"
+                            }}
+                          >
+                            <div 
+                              style={{
+                                width: "8.9px",
+                                height: "8.9px",
+                                background: "#A0D2E7",
+                                borderRadius: "50%",
+                                flex: "none",
+                                order: 0,
+                                flexGrow: 0,
+                                zIndex: 0
+                              }}
+                            />
+                            <div 
+                              style={{
+                                position: "absolute",
+                                width: "4.45px",
+                                height: "4.45px",
+                                left: "5px",
+                                top: "5px",
+                                background: "#FFFFFF",
+                                borderRadius: "50%",
+                                flex: "none",
+                                order: 1,
+                                flexGrow: 0,
+                                zIndex: 1
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   )}
 
@@ -552,6 +630,8 @@ export default function Home() {
                               fontSize: subtitleFontSize,
                               lineHeight: subtitleLineHeight,
                               color: "#576E78",
+                              wordBreak: "keep-all",
+                              overflowWrap: "break-word",
                             }}
                             className="line-clamp-2"
                           >
@@ -560,83 +640,90 @@ export default function Home() {
                         </div>
 
                         {/* Frame 1410167834 (Members/Tags) */}
-                        <div
-                          className="flex flex-col items-start justify-start"
-                          style={{
-                            width: "100%",
-                            gap: tagsGap,
-                          }}
-                        >
-                          {/* Row 1 (Frame 1410167832) */}
-                          <div
-                            className="flex flex-row items-center"
-                            style={{
-                              width: "100%",
-                              gap: tagsGap,
-                            }}
-                          >
-                            {project.members.slice(0, 3).map((member, mIdx) => (
-                              <div
-                                key={member}
-                                className="flex flex-row justify-center items-center"
-                                style={{
-                                  background: mIdx === 0 ? "#79DBC9" : "#BFDDD8",
-                                  borderRadius: "28px",
-                                  padding: tagPadding,
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontFamily: "'Pretendard Variable', sans-serif",
-                                    fontStyle: "normal",
-                                    fontWeight: "400",
-                                    fontSize: tagFontSize,
-                                    lineHeight: tagLineHeight,
-                                    color: "#576E78",
-                                  }}
-                                >
-                                  {member}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Row 2 (Frame 1410167833) */}
-                          {project.members.length > 3 && (
+                        {(() => {
+                          const firstRowLimit = project.members.length <= 2 ? project.members.length : 2;
+                          const hasSecondRow = project.members.length > firstRowLimit;
+                          
+                          return (
                             <div
-                              className="flex flex-row items-center"
+                              className="flex flex-col items-start justify-start"
                               style={{
                                 width: "100%",
                                 gap: tagsGap,
                               }}
                             >
-                              {project.members.slice(3).map((member) => (
-                                <div
-                                  key={member}
-                                  className="flex flex-row justify-center items-center"
-                                  style={{
-                                    background: "#BFDDD8",
-                                    borderRadius: "28px",
-                                    padding: tagPadding,
-                                  }}
-                                >
-                                  <span
+                              {/* Row 1 (Frame 1410167832) */}
+                              <div
+                                className="flex flex-row items-center"
+                                style={{
+                                  width: "100%",
+                                  gap: tagsGap,
+                                }}
+                              >
+                                {project.members.slice(0, firstRowLimit).map((member, mIdx) => (
+                                  <div
+                                    key={member}
+                                    className="flex flex-row justify-center items-center"
                                     style={{
-                                      fontFamily: "'Pretendard Variable', sans-serif",
-                                      fontStyle: "normal",
-                                      fontWeight: "400",
-                                      fontSize: tagFontSize,
-                                      lineHeight: tagLineHeight,
-                                      color: "#576E78",
+                                      background: mIdx === 0 ? "#79DBC9" : "#BFDDD8",
+                                      borderRadius: "28px",
+                                      padding: tagPadding,
                                     }}
                                   >
-                                    {member}
-                                  </span>
+                                    <span
+                                      style={{
+                                        fontFamily: "'Pretendard Variable', sans-serif",
+                                        fontStyle: "normal",
+                                        fontWeight: "400",
+                                        fontSize: tagFontSize,
+                                        lineHeight: tagLineHeight,
+                                        color: "#576E78",
+                                      }}
+                                    >
+                                      {member}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Row 2 (Frame 1410167833) */}
+                              {hasSecondRow && (
+                                <div
+                                  className="flex flex-row items-center"
+                                  style={{
+                                    width: "100%",
+                                    gap: tagsGap,
+                                  }}
+                                >
+                                  {project.members.slice(firstRowLimit).map((member, mIdx) => (
+                                    <div
+                                      key={member}
+                                      className="flex flex-row justify-center items-center"
+                                      style={{
+                                        background: "#BFDDD8",
+                                        borderRadius: "28px",
+                                        padding: tagPadding,
+                                      }}
+                                    >
+                                      <span
+                                        style={{
+                                          fontFamily: "'Pretendard Variable', sans-serif",
+                                          fontStyle: "normal",
+                                          fontWeight: "400",
+                                          fontSize: tagFontSize,
+                                          lineHeight: tagLineHeight,
+                                          color: "#576E78",
+                                        }}
+                                      >
+                                        {member}
+                                      </span>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
+                              )}
                             </div>
-                          )}
-                        </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -646,6 +733,7 @@ export default function Home() {
                       style={{
                         width: footerWidth,
                         height: footerHeight,
+                        overflow: "hidden", // ◀ 푸터 내부에서 개별적으로 overflow: hidden을 걸어 삐져나감을 완벽 차단
                       }}
                     >
                       {/* Edited Text */}
