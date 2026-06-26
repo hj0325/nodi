@@ -62,6 +62,7 @@ export function useNodePorts({
           : {}),
         ...(n.type === "thinkingNode"
           ? {
+              id: n.id,
               nodeId: n.id,
               conflictLinkedNodeTitles: conflictByNodeId?.[n.id]?.linkedNodeTitles || [],
               conflictExplanation: conflictExplainResultByNodeId?.[n.id] || null,

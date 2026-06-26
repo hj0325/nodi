@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Handle, Position } from "reactflow";
 import { getTypeMeta, normalizeNodeCategory, getSourceTypeMeta, normalizeVisibility } from "@/lib/thinkingMachine/nodeMeta";
 import ConflictPopover from "@/components/thinkingMachine/conflicts/ConflictPopover";
@@ -119,6 +119,11 @@ export default function ThinkingNode({ id, data = {} }) {
 
   const speakerMeta = useMemo(() => getSpeakerMeta(data.editedBy), [data.editedBy]);
 
+  const [isOriginal, setIsOriginal] = useState(false);
+
+  const displayTitle = isOriginal && data.originalTitle ? data.originalTitle : (data.title || "Untitled Node");
+  const displayContent = isOriginal && data.originalContent ? data.originalContent : data.content;
+
   return (
     <div className="relative h-full w-full">
       <ConflictPopover
@@ -145,6 +150,11 @@ export default function ThinkingNode({ id, data = {} }) {
       >
         {/* Toggle (Frame 1410167810) */}
         <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsOriginal(!isOriginal);
+          }}
+          className="cursor-pointer"
           style={{
             width: "43px",
             height: "22.76px",
@@ -152,8 +162,8 @@ export default function ThinkingNode({ id, data = {} }) {
             flex: "none",
             order: 0,
             flexGrow: 0,
-            visibility: (id === "node-meet-problem" || data.nodeId === "node-meet-problem") ? "hidden" : "visible",
           }}
+          title={isOriginal ? "AI 요약본 보기" : "STT 원문 보기"}
         >
           <div
             style={{
@@ -161,7 +171,7 @@ export default function ThinkingNode({ id, data = {} }) {
               display: "flex",
               flexDirection: "row",
               alignItems: "flex-start",
-              padding: (visibility === "shared" || visibility === "reviewed" || visibility === "agreed")
+              padding: !isOriginal
                 ? "3.37255px 2.52941px 21.9216px"
                 : "21.9216px 2.52941px 3.37255px",
               gap: "8.43px",
@@ -174,6 +184,7 @@ export default function ThinkingNode({ id, data = {} }) {
               left: "50%",
               top: "50%",
               transform: "translate(-50%, -50%) rotate(-90deg)",
+              transition: "padding 0.2s ease-in-out",
             }}
           >
             {/* Ellipse 173 */}
@@ -184,10 +195,11 @@ export default function ThinkingNode({ id, data = {} }) {
                 borderRadius: "50%",
                 flex: "none",
                 flexShrink: 0,
-                background: (visibility === "shared" || visibility === "reviewed" || visibility === "agreed")
+                background: !isOriginal
                   ? "#62B8AA"
                   : "#CBD5E1",
                 boxShadow: "inset -0.843137px -1.68627px 3.20392px rgba(98, 98, 98, 0.25), inset 0px 3.37255px 2.52941px rgba(255, 255, 255, 0.26)",
+                transition: "background-color 0.2s ease-in-out",
               }}
             />
           </div>
@@ -344,7 +356,7 @@ export default function ThinkingNode({ id, data = {} }) {
                   flexDirection: "column",
                   alignItems: "flex-start",
                   padding: "0px",
-                  gap: visibility !== "candidate" ? "28px" : "0px",
+                  gap: visibility !== "candidate" ? (isOriginal ? "0px" : "28px") : "0px",
                   width: "205px",
                   height: "94px",
                   flex: "none",
@@ -362,7 +374,7 @@ export default function ThinkingNode({ id, data = {} }) {
                     padding: "0px",
                     gap: "5px",
                     width: "205px",
-                    height: "49px",
+                    height: isOriginal ? "77px" : "49px",
                     flex: "none",
                     order: 0,
                     alignSelf: "stretch",
@@ -386,15 +398,15 @@ export default function ThinkingNode({ id, data = {} }) {
                       flexGrow: 0,
                     }}
                   >
-                    {data.title || "Untitled Node"}
+                    {displayTitle}
                   </div>
 
                   {/* Content */}
                   <div
-                    className="line-clamp-2 font-normal"
+                    className={`${isOriginal ? "line-clamp-4 overflow-y-auto pr-0.5" : "line-clamp-2"} font-normal`}
                     style={{
                       width: "205px",
-                      height: "28px",
+                      height: isOriginal ? "56px" : "28px",
                       fontFamily: "'Pretendard Variable', sans-serif",
                       fontStyle: "normal",
                       fontSize: "10px",
@@ -406,7 +418,7 @@ export default function ThinkingNode({ id, data = {} }) {
                       flexGrow: 0,
                     }}
                   >
-                    {data.content}
+                    {displayContent}
                   </div>
                 </div>
 
