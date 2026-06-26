@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Home, ChevronDown } from "lucide-react";
 import {
-  Home,
-  Lightbulb,
-  Search,
-  MessageSquare,
-  Zap,
-  ChevronDown,
-} from "lucide-react";
+  ActionStepIcon,
+  DecisionStepIcon,
+  IdeaStepIcon,
+  PhaseStepButton,
+  ResearchStepIcon,
+  SolutionStepIcon,
+} from "@/components/thinkingMachine/ui/PhaseStepperIcons";
 
 const TOPBAR_TEXT_STYLE = {
   fontFamily: '"Pretendard Variable", sans-serif',
@@ -126,117 +127,55 @@ export default function TopBar({
             </div>
           </div>
 
-          {/* Center Column: Actions Panel (Frame 1410167788) */}
+          {/* Center Column: Phase Stepper (Frame 1410167788) */}
           <div className="flex justify-center">
             <div
-              className="pointer-events-auto flex flex-col items-start"
+              className="pointer-events-auto flex items-center justify-center"
               style={{
-                width: "236px",
-                height: "36px",
+                boxSizing: "border-box",
+                width: "268px",
+                height: "42px",
                 background: "rgba(255, 255, 255, 0.64)",
-                border: "1px solid #FFFFFF",
+                boxShadow: "inset 0 0 0 1px #FFFFFF",
                 borderRadius: "35px",
-                padding: "4px 6px",
-                gap: "8px",
+                padding: "5px 8px",
               }}
             >
-              {/* Frame 1410167808 (Relative container to place dashed line behind buttons) */}
-              <div className="relative w-[224px] h-[28px] isolation-isolate">
-                
-                {/* Dashed Line (Frame 1410167807) */}
+              <div className="relative h-[32px] w-[252px] shrink-0 isolation-isolate">
+                {/* Dashed connectors (Frame 1410167807) */}
                 <div
-                  className="absolute left-[14px] right-[14px] top-1/2 h-0 border-t border-dashed border-[#C4CED1] -translate-y-1/2 z-0"
-                  style={{ width: "160px" }}
-                />
-
-                {/* Buttons Container (Frame 1410167806) */}
-                <div
-                  className="absolute inset-0 flex flex-row items-center z-10"
-                  style={{
-                    width: "224px",
-                    height: "28px",
-                    gap: "21px",
-                  }}
+                  className="absolute left-[35px] top-1/2 z-0 flex -translate-y-1/2 flex-row items-center"
+                  style={{ width: "182px", height: 0, gap: "38px" }}
                 >
-                  {/* Frame 82 (Idea Active Button) */}
-                  <button
-                    type="button"
-                    className="flex items-center justify-center text-white transition-transform active:scale-95"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      background: "#62B8AA",
-                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
-                      borderRadius: "761.143px",
-                    }}
-                    title="AI 제안"
-                  >
-                    <Lightbulb className="h-[15px] w-[15px]" />
-                  </button>
+                  {[0, 1, 2, 3].map((index) => (
+                    <div
+                      key={index}
+                      className="border-t border-dashed border-[#C4CED1]"
+                      style={{ width: "17px", height: 0 }}
+                    />
+                  ))}
+                </div>
 
-                  {/* Frame 83 */}
-                  <button
-                    type="button"
-                    className="flex items-center justify-center text-white transition-transform active:scale-95"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      background: "#CCE9E7",
-                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
-                      borderRadius: "761.143px",
-                    }}
-                    title="검색 및 확대"
-                  >
-                    <Search className="h-[15px] w-[15px]" />
-                  </button>
-
-                  {/* Frame 84 */}
-                  <button
-                    type="button"
-                    className="flex items-center justify-center text-white transition-transform active:scale-95"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      background: "#CCE9E7",
-                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
-                      borderRadius: "761.143px",
-                    }}
-                    title="메시지 추가"
-                  >
-                    <MessageSquare className="h-[15px] w-[15px]" />
-                  </button>
-
-                  {/* Frame 85 */}
-                  <button
-                    type="button"
-                    className="flex items-center justify-center text-white transition-transform active:scale-95"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      background: "#CCE9E7",
-                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
-                      borderRadius: "761.143px",
-                    }}
-                    title="검토 완료"
-                  >
-                    <MessageSquare className="h-[15px] w-[15px]" />
-                  </button>
-
-                  {/* Frame 86 */}
-                  <button
-                    type="button"
-                    className="flex items-center justify-center text-white transition-transform active:scale-95"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      background: "#CCE9E7",
-                      boxShadow: "inset 0.761905px 0.761905px 0.761905px rgba(255, 255, 255, 0.8), inset 0px -0.761905px 1.52381px #B4D7D5",
-                      borderRadius: "761.143px",
-                    }}
-                    title="퀵 액션"
-                  >
-                    <Zap className="h-[15px] w-[15px]" />
-                  </button>
+                {/* Phase buttons (Frame 1410167806) */}
+                <div
+                  className="absolute inset-0 z-10 flex flex-row items-center"
+                  style={{ width: "252px", height: "32px", gap: "23px" }}
+                >
+                  <PhaseStepButton active title="Idea">
+                    <IdeaStepIcon />
+                  </PhaseStepButton>
+                  <PhaseStepButton title="Research">
+                    <ResearchStepIcon />
+                  </PhaseStepButton>
+                  <PhaseStepButton title="Solution">
+                    <SolutionStepIcon />
+                  </PhaseStepButton>
+                  <PhaseStepButton title="Decision">
+                    <DecisionStepIcon />
+                  </PhaseStepButton>
+                  <PhaseStepButton title="Action">
+                    <ActionStepIcon />
+                  </PhaseStepButton>
                 </div>
               </div>
             </div>
