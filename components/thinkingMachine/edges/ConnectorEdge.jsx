@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { getTypeMeta } from "@/lib/thinkingMachine/nodeMeta";
 import { getAlignmentVisualMeta } from "@/lib/thinkingMachine/reasoningAlignment";
+import { GRAPH_ENTRANCE_EDGE_DELAY_MS } from "@/lib/thinkingMachine/connectorEdges";
 
 const DEFAULT_LINE_COLOR = "#AAF17B";
 const DEFAULT_LINE_WIDTH = 1.65;
@@ -380,11 +382,38 @@ export default function ConnectorEdge({
 
   const primaryWidth = isSelected ? lineWidth + 0.4 : 1.3;
   const isDashedEdge = Boolean(lineDash);
-  const edgePathClassName = `react-flow__edge-path ${isDashedEdge ? "tm-dashed-edge animate-fade-edge" : "animate-draw-edge"}`;
-  const edgePathProps = isDashedEdge ? {} : { pathLength: "1" };
+  const isHydratedEdge = Boolean(data?.isHydratedEdge);
+  const graphEntranceAnimating = Boolean(data?.graphEntranceAnimating);
+  const [hasCompletedEntrance, setHasCompletedEntrance] = useState(false);
+  const hideForEntrance =
+    isHydratedEdge && graphEntranceAnimating && GRAPH_ENTRANCE_EDGE_DELAY_MS > 0;
+  const shouldAnimateDrawEntrance = isHydratedEdge
+    ? graphEntranceAnimating
+    : !hasCompletedEntrance;
+
+  let edgePathClassName = "react-flow__edge-path";
+  if (shouldAnimateDrawEntrance) {
+    edgePathClassName += " animate-draw-edge";
+  } else if (isDashedEdge) {
+    edgePathClassName += " tm-dashed-edge";
+  }
+
+  const edgePathProps = shouldAnimateDrawEntrance ? { pathLength: "1" } : {};
+  const entrancePathAnimationStyle = hideForEntrance
+    ? { animationDelay: `${GRAPH_ENTRANCE_EDGE_DELAY_MS}ms` }
+    : null;
+  const dashedStrokeStyle =
+    isDashedEdge && !shouldAnimateDrawEntrance ? { strokeDasharray: lineDash } : {};
 
   return (
-    <g className={`tm-connector-edge ${isSelected ? "is-selected" : ""}`}>
+    <g
+      className={`tm-connector-edge ${isSelected ? "is-selected" : ""}${hideForEntrance ? " tm-connector-edge-entrance" : ""}`}
+      style={
+        hideForEntrance
+          ? { animationDelay: `${GRAPH_ENTRANCE_EDGE_DELAY_MS}ms` }
+          : undefined
+      }
+    >
       <defs>
         <linearGradient
           id={gradientId}
@@ -410,7 +439,8 @@ export default function ConnectorEdge({
           strokeLinejoin: "round",
           opacity: isSelected ? 0.95 : 0.82,
           filter: "none",
-          ...(isDashedEdge ? { strokeDasharray: lineDash } : {}),
+          ...dashedStrokeStyle,
+          ...entrancePathAnimationStyle,
         }}
       />
       <path
@@ -419,6 +449,9 @@ export default function ConnectorEdge({
         {...edgePathProps}
         className={edgePathClassName}
         fill="none"
+        onAnimationEnd={
+          !isHydratedEdge && !hasCompletedEntrance ? () => setHasCompletedEntrance(true) : undefined
+        }
         style={{
           stroke: primaryStroke,
           strokeWidth: primaryWidth,
@@ -428,7 +461,8 @@ export default function ConnectorEdge({
           filter: isSelected
             ? "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.10))"
             : "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.08))",
-          ...(isDashedEdge ? { strokeDasharray: lineDash } : {}),
+          ...dashedStrokeStyle,
+          ...entrancePathAnimationStyle,
         }}
       />
 

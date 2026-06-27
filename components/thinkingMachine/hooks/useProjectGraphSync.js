@@ -35,6 +35,7 @@ export function useProjectGraphSync({
   setProjectTitle,
   setHasStartedInput,
   setIsGraphHydrating,
+  setIsGraphEntranceAnimating,
   refreshProjectCollaborationMeta,
   lastSavedGraphRef,
   lastSyncedTitleRef,
@@ -44,15 +45,30 @@ export function useProjectGraphSync({
     let cancelled = false;
     const hydrateGraph = async () => {
       if (!projectId) {
+        setIsGraphEntranceAnimating(false);
         setIsGraphHydrating(false);
         return;
       }
       try {
         const payload = await fetchProjectGraph(projectId);
         if (cancelled) return;
-        const hydratedNodes = hydrateProjectNodes(payload?.graph?.nodes || [], { projectId });
+        const hydratedNodes = hydrateProjectNodes(payload?.graph?.nodes || [], { projectId }).map(
+          (node) => ({
+            ...node,
+            data: {
+              ...(node.data || {}),
+              isHydratedNode: true,
+            },
+          })
+        );
         const rawEdges = hydrateProjectEdges(payload?.graph?.edges || []);
-        const hydratedEdges = toConnectorEdges(rawEdges, hydratedNodes);
+        const hydratedEdges = toConnectorEdges(rawEdges, hydratedNodes).map((edge) => ({
+          ...edge,
+          data: {
+            ...(edge.data || {}),
+            isHydratedEdge: true,
+          },
+        }));
         const nextStage = payload?.graph?.stage || "research-diverge";
         const nextMeetingMemory = payload?.meetingMemory || getDefaultMeetingMemory();
         setNodes(hydratedNodes);
@@ -64,12 +80,14 @@ export function useProjectGraphSync({
           lastSyncedTitleRef.current = payload.project.title;
         }
         setHasStartedInput(hydratedNodes.some((node) => node?.type === "thinkingNode"));
+        setIsGraphEntranceAnimating(hydratedEdges.length > 0);
         lastSavedGraphRef.current = JSON.stringify({
           graph: serializeProjectGraph(hydratedNodes, hydratedEdges, nextStage),
           meetingMemory: nextMeetingMemory,
         });
       } catch (error) {
         console.error("Failed to hydrate project graph:", error);
+        setIsGraphEntranceAnimating(false);
       } finally {
         if (!cancelled) setIsGraphHydrating(false);
       }
@@ -86,6 +104,7 @@ export function useProjectGraphSync({
     setEdges,
     setHasStartedInput,
     setIsGraphHydrating,
+    setIsGraphEntranceAnimating,
     setMeetingMemory,
     setNodes,
     setProjectTitle,

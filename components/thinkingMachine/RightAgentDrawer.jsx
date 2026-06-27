@@ -217,7 +217,7 @@ export default function RightAgentDrawer({
     return items;
   }, [recommendations, dismissedAlertIds, todayStr, onLinkNodes]);
 
-  const showMeetingFlowBanner = isSeededProject && isSimulationCompleted && !isSimulationActive;
+  const showMeetingFlowBanner = !isSimulationActive && (!isSeededProject || isSimulationCompleted);
   const [pinnedSttText, setPinnedSttText] = useState("");
   const prevMeetingCaptureLoadingRef = useRef(false);
 
@@ -703,7 +703,7 @@ export default function RightAgentDrawer({
                           color: "#A1B1B6",
                         }}
                       >
-                        회의 종료
+                        {isSeededProject ? "회의 종료" : "회의 중..."}
                       </span>
                       <span
                         style={{
@@ -714,7 +714,9 @@ export default function RightAgentDrawer({
                           color: "#444859",
                         }}
                       >
-                        현재 Nodi에 팀원이 함께 있지 않습니다.
+                        {isSeededProject
+                          ? "현재 Nodi에 팀원이 함께 있지 않습니다."
+                          : "현재 Nodi에서 회의록을 기록중입니다."}
                       </span>
                       <span
                         style={{

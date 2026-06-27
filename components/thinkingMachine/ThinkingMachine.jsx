@@ -12,7 +12,11 @@ import NodeMap from "./NodeMap";
 import RightAgentDrawer from "./RightAgentDrawer";
 import TopBar from "./TopBar";
 import { getNodeSnapshot, getRelatedNodeIds } from "@/components/thinkingMachine/utils/graphSnapshots";
-import { decorateConnectorEdges, toConnectorEdges } from "@/lib/thinkingMachine/connectorEdges";
+import {
+    GRAPH_ENTRANCE_ANIMATION_MS,
+    decorateConnectorEdges,
+    toConnectorEdges,
+} from "@/lib/thinkingMachine/connectorEdges";
 import { toReactFlowNode } from "@/lib/thinkingMachine/reactflowTransforms";
 import { computeNodeBounds, relayoutTopLevelThinkingNodes, shiftClusterRightOfExisting } from "@/lib/thinkingMachine/graphMerge";
 import { useAdminMode } from "@/hooks/useAdminMode";
@@ -1165,6 +1169,7 @@ export default function ThinkingMachine({
         return null;
     });
     const [isGraphHydrating, setIsGraphHydrating] = useState(true);
+    const [isGraphEntranceAnimating, setIsGraphEntranceAnimating] = useState(false);
     const [selectedTeamMemberId, setSelectedTeamMemberId] = useState(null);
     const [selectedActivityEventId, setSelectedActivityEventId] = useState(null);
     const [teamContextSummary, setTeamContextSummary] = useState(null);
@@ -1376,11 +1381,24 @@ export default function ThinkingMachine({
         setProjectTitle,
         setHasStartedInput,
         setIsGraphHydrating,
+        setIsGraphEntranceAnimating,
         refreshProjectCollaborationMeta,
         lastSavedGraphRef,
         lastSyncedTitleRef,
         projectTitle,
     });
+
+    useEffect(() => {
+        setIsGraphEntranceAnimating(false);
+    }, [projectId]);
+
+    useEffect(() => {
+        if (!isGraphEntranceAnimating) return undefined;
+        const timer = window.setTimeout(() => {
+            setIsGraphEntranceAnimating(false);
+        }, GRAPH_ENTRANCE_ANIMATION_MS);
+        return () => window.clearTimeout(timer);
+    }, [isGraphEntranceAnimating, projectId]);
 
     const handleFlowInit = (instance) => {
         reactFlowRef.current = instance;
@@ -1673,8 +1691,15 @@ export default function ThinkingMachine({
         [edges, nodes]
     );
     const decoratedCanvasEdges = useMemo(
-        () => decorateConnectorEdges(canvasEdges, reasoningAlignmentAnalysis, canvasNodes),
-        [canvasEdges, canvasNodes, reasoningAlignmentAnalysis]
+        () =>
+            decorateConnectorEdges(canvasEdges, reasoningAlignmentAnalysis, canvasNodes).map((edge) => ({
+                ...edge,
+                data: {
+                    ...(edge.data || {}),
+                    graphEntranceAnimating: edge?.data?.isHydratedEdge ? isGraphEntranceAnimating : undefined,
+                },
+            })),
+        [canvasEdges, canvasNodes, isGraphEntranceAnimating, reasoningAlignmentAnalysis]
     );
     const alignmentSummary = reasoningAlignmentAnalysis?.selectedSummary || {
         counts: reasoningAlignmentAnalysis?.counts || {},

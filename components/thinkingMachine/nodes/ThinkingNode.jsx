@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { getTypeMeta, normalizeNodeCategory, normalizeJobTag, getJobTagMeta, getTopicTagMeta, resolveTopicTagForNode, normalizeVisibility, splitOriginalSpeechParagraphs, ORIGINAL_SPEECH_HIGHLIGHT_PHRASE } from "@/lib/thinkingMachine/nodeMeta";
 import { getParticipantMeta } from "@/lib/thinkingMachine/participantMeta";
 import { NODE_PORT_LAYOUT } from "@/lib/thinkingMachine/reactflowTransforms";
+import { NEW_NODE_ENTRANCE_DELAY_S } from "@/lib/thinkingMachine/connectorEdges";
 import ConflictPopover from "@/components/thinkingMachine/conflicts/ConflictPopover";
 
 const HANDLE_STYLE = {
@@ -265,6 +266,7 @@ export default function ThinkingNode({ id, data = {} }) {
   const hasOriginal = Boolean(originalContent.trim());
   const showingOriginal = hasOriginal && isOriginal;
   const showTags = !showingOriginal;
+  const entranceDelay = data?.isHydratedNode ? 0 : NEW_NODE_ENTRANCE_DELAY_S;
 
   return (
     <div className="relative h-full w-full">
@@ -311,7 +313,7 @@ export default function ThinkingNode({ id, data = {} }) {
           type: "spring",
           stiffness: 160,
           damping: 14,
-          delay: 0.25,
+          delay: entranceDelay,
         }}
         style={{ transformOrigin }}
       >

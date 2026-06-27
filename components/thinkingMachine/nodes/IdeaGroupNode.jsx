@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Handle, Position } from "reactflow";
 import { motion } from "framer-motion";
+import { NEW_NODE_ENTRANCE_DELAY_S } from "@/lib/thinkingMachine/connectorEdges";
 
 const HANDLE_STYLE = {
   top: 46,
@@ -20,6 +21,7 @@ export default function IdeaGroupNode({ id, data, selected }) {
   const onToggle = data?.onToggle;
 
   const isRaw = mode === "raw";
+  const entranceDelay = data?.isHydratedNode ? 0 : NEW_NODE_ENTRANCE_DELAY_S;
 
   return (
     <div className="relative h-full w-full">
@@ -38,7 +40,7 @@ export default function IdeaGroupNode({ id, data, selected }) {
             type: "spring",
             stiffness: 150,
             damping: 15,
-            delay: 0.15,
+            delay: entranceDelay,
           }}
         />
       ) : (
@@ -52,7 +54,7 @@ export default function IdeaGroupNode({ id, data, selected }) {
             type: "spring",
             stiffness: 150,
             damping: 15,
-            delay: 0.15,
+            delay: entranceDelay,
           }}
         >
           <div className="absolute left-3 top-2.5 flex items-center gap-1.5">

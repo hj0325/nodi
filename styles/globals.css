@@ -260,9 +260,23 @@ h6,
   animation: draw-path 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.tm-connector-edge-entrance {
+  opacity: 0;
+  animation: tm-connector-edge-unhide 0s linear forwards;
+}
+
+@keyframes tm-connector-edge-unhide {
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes fade-in-edge {
   from {
     opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
