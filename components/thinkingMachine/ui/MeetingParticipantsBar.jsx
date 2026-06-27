@@ -93,16 +93,23 @@ export default function MeetingParticipantsBar({
   activeSpeakerId = null,
   isSpeaking = false,
   hasSpeechActivity = false,
+  isSimulationCompleted = false,
 }) {
   const members = useMemo(() => {
-    const source = Array.isArray(teamMembers) && teamMembers.length ? teamMembers : getDefaultTeamMembers();
+    let source = Array.isArray(teamMembers) && teamMembers.length ? teamMembers : getDefaultTeamMembers();
+    if (isSimulationCompleted) {
+      source = source.filter((member) => {
+        const meta = getParticipantMeta(member);
+        return meta.id === "user-hyeonji" || meta.initial === "H";
+      });
+    }
     return sortParticipants(
       source.map((member) => {
         const meta = getParticipantMeta(member);
         return { ...meta, ...member, bg: meta.bg };
       })
     );
-  }, [teamMembers]);
+  }, [teamMembers, isSimulationCompleted]);
 
   const activeMember = useMemo(() => {
     if (!isSpeaking || !activeSpeakerId) return null;
@@ -119,11 +126,21 @@ export default function MeetingParticipantsBar({
     return members;
   }, [activeMember, isSpeaking, members]);
 
-  const rosterWidth = isSpeaking ? ROSTER_WIDTH_COMPACT : ROSTER_WIDTH_FULL;
+  const rosterWidth = useMemo(() => {
+    if (isSpeaking) return ROSTER_WIDTH_COMPACT;
+    if (rosterMembers.length <= 1) return 64;
+    return ROSTER_WIDTH_FULL;
+  }, [isSpeaking, rosterMembers.length]);
+
   const totalWidth = isSpeaking
-    ? SPEAKER_PILL_WIDTH + ROSTER_GAP + ROSTER_WIDTH_COMPACT
-    : ROSTER_WIDTH_FULL;
-  const chevronLeft = rosterMembers.length >= 4 ? 105 : 83;
+    ? SPEAKER_PILL_WIDTH + ROSTER_GAP + rosterWidth
+    : rosterWidth;
+
+  const chevronLeft = useMemo(() => {
+    if (rosterMembers.length >= 4) return 105;
+    if (rosterMembers.length <= 1) return 38;
+    return 83;
+  }, [rosterMembers.length]);
 
   return (
     <LayoutGroup id="meeting-participants">

@@ -11,7 +11,7 @@ export function useThinkingCollaboration({
   projectId,
   currentUserId,
   currentUserRole = "editor",
-  currentUserName = "You",
+  currentUserName = "Hyeonji",
   currentUserEmail = "",
   currentUserPicture = "",
   autoRefreshMs = 15000,

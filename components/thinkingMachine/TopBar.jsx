@@ -28,6 +28,7 @@ export default function TopBar({
   activeSpeakerId,
   isSpeaking = false,
   hasSpeechActivity = false,
+  isSimulationCompleted = false,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [draftTitle, setDraftTitle] = useState(projectTitle);
@@ -192,6 +193,7 @@ export default function TopBar({
               activeSpeakerId={activeSpeakerId}
               isSpeaking={isSpeaking}
               hasSpeechActivity={hasSpeechActivity}
+              isSimulationCompleted={isSimulationCompleted}
             />
           </div>
 

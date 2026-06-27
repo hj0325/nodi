@@ -52,7 +52,7 @@ const INITIAL_NODES = [];
 const INITIAL_EDGES = [];
 const ADMIN_MODE_STORAGE_KEY = "vtm-admin-mode-enabled";
 const ADMIN_HINT_DISMISSED_KEY = "vtm-admin-shortcut-hint-dismissed";
-const MOCK_CURRENT_USER_ID = "mock-user-1";
+const MOCK_CURRENT_USER_ID = "user-hyeonji";
 const MOCK_CURRENT_USER_ROLE = "owner";
 const AUTO_FIT_MAX_ZOOM = 1;
 
@@ -1193,7 +1193,7 @@ export default function ThinkingMachine({
     });
 
     const currentUserId = currentUser?.id || MOCK_CURRENT_USER_ID;
-    const currentUserName = currentUser?.name || "You";
+    const currentUserName = currentUser?.name || "Hyeonji";
     const currentUserRole = currentUser?.role || MOCK_CURRENT_USER_ROLE;
     const currentUserEmail = currentUser?.email || "";
     const currentUserPicture = currentUser?.picture || "";
@@ -2443,6 +2443,7 @@ export default function ThinkingMachine({
                 activeSpeakerId={activeSpeakerId}
                 isSpeaking={isActiveSpeakerTalking}
                 hasSpeechActivity={hasSpeechActivity}
+                isSimulationCompleted={isSimulationCompleted}
             />
 
             <main className="flex-1 w-full h-full relative">

@@ -27,7 +27,7 @@ export function useThinkingAiAnalyze({
   animateViewportToNodes,
   setIsAnalyzing,
   currentUserId,
-  currentUserName = "You",
+  currentUserName = "Hyeonji",
   meetingState = "active",
 }) {
   const handleInputSubmit = useCallback(

@@ -25,7 +25,7 @@ export function useDraftGrouping({
   reactFlowRef,
   stage = "research-diverge",
   currentUserId = "mock-user-1",
-  currentUserName = "You",
+  currentUserName = "Hyeonji",
   meetingState = "ended",
 } = {}) {
   const [selectedDraftIds, setSelectedDraftIds] = useState([]);
