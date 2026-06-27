@@ -2528,6 +2528,7 @@ export default function ThinkingMachine({
                             simulationText={simulation.text}
                             isSeededProject={IS_SEEDED_PROJECT}
                             isSimulationCompleted={isSimulationCompleted}
+                            isMeetingCaptureLoading={isMeetingCaptureLoading}
                             onStartSimulation={handleStartSimulation}
                             onDismissSuggestion={(id) => {
                                 setDismissedSuggestionIds((prev) => {

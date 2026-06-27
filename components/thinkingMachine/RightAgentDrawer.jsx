@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Clock,
   Mic,
@@ -81,6 +81,7 @@ export default function RightAgentDrawer({
   simulationText = "",
   isSeededProject = false,
   isSimulationCompleted = false,
+  isMeetingCaptureLoading = false,
   onStartSimulation,
 }) {
   const { mode: thinkingMode, flow: thinkingFlow } = parseStage(stage);
@@ -215,7 +216,48 @@ export default function RightAgentDrawer({
     return items;
   }, [recommendations, dismissedAlertIds, todayStr, onLinkNodes]);
 
-  const isSttActive = isListening && (sttTranscript || interimTranscript);
+  const showMeetingFlowBanner = isSeededProject && isSimulationCompleted && !isSimulationActive;
+  const [pinnedSttText, setPinnedSttText] = useState("");
+
+  useEffect(() => {
+    const live = `${sttTranscript || ""} ${interimTranscript || ""}`.trim();
+    if (live) setPinnedSttText(live);
+    if (!isListening && !isMeetingCaptureLoading) setPinnedSttText("");
+  }, [sttTranscript, interimTranscript, isListening, isMeetingCaptureLoading]);
+
+  const meetingFlowBannerStatus = useMemo(() => {
+    if (isMeetingCaptureLoading) return "generating";
+    if (isListening && (sttTranscript || interimTranscript || pinnedSttText)) return "stt";
+    return "idle";
+  }, [isMeetingCaptureLoading, isListening, sttTranscript, interimTranscript, pinnedSttText]);
+
+  const meetingFlowBannerStyle = useMemo(() => {
+    if (meetingFlowBannerStatus === "generating") {
+      return {
+        height: 56,
+        background: "rgba(189, 254, 255, 0.22)",
+        boxShadow:
+          "inset 0px 4px 10.9px #FFFFFF, inset 0px -1px 18.8px rgba(0, 255, 85, 0.48)",
+      };
+    }
+    if (meetingFlowBannerStatus === "stt") {
+      return {
+        height: 56,
+        background: "rgba(255, 255, 255, 0.22)",
+        boxShadow:
+          "inset 0px 0px 25.5px #5CF3CB, inset 0px -6px 9.6px rgba(255, 255, 255, 0.61)",
+      };
+    }
+    return {
+      height: 75,
+      background: "rgba(130, 216, 208, 0.22)",
+      boxShadow:
+        "inset 0px 4px 10.9px #FFFFFF, inset 0px -6px 9.6px rgba(255, 255, 255, 0.61)",
+    };
+  }, [meetingFlowBannerStatus]);
+
+  const liveSttText = `${sttTranscript || ""}${interimTranscript ? `${sttTranscript ? " " : ""}${interimTranscript}` : ""}`.trim();
+  const displaySttText = liveSttText || pinnedSttText;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[45]">
@@ -457,34 +499,167 @@ export default function RightAgentDrawer({
               </div>
             </div>
 
-            {/* Live STT Transcript or Simulation speech bubble */}
+            {/* Simulation speech or unified post-meeting flow banner */}
             {isSimulationActive ? (
-              <div
-                className="w-full rounded-[14px] bg-sky-50 border border-sky-200 px-3 py-2 flex flex-col gap-1 shrink-0 shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
+              <motion.div
+                layout
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                className="w-full shrink-0 overflow-hidden rounded-[14px] border border-sky-200 bg-sky-50 px-3 py-2 shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
               >
                 <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-sky-600">[{simulationSpeaker}] 발화 및 기록 중...</span>
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500" />
+                  <span className="text-[10px] font-bold text-sky-600">
+                    [{simulationSpeaker}] 발화 및 기록 중...
+                  </span>
                 </div>
-                <p className="text-[10px] leading-relaxed text-slate-800 font-medium max-h-[50px] overflow-y-auto">
+                <p className="max-h-[50px] overflow-y-auto text-[10px] font-medium leading-relaxed text-slate-800">
                   {simulationText}
                 </p>
-              </div>
-            ) : isSttActive ? (
-              <div
-                className="w-full rounded-[14px] bg-white/40 border border-[#CDE9E9] px-3 py-2 flex flex-col gap-1 shrink-0"
+              </motion.div>
+            ) : showMeetingFlowBanner ? (
+              <motion.div
+                layout
+                className="relative flex shrink-0 flex-col items-start overflow-hidden"
+                initial={false}
+                animate={{
+                  height: meetingFlowBannerStyle.height,
+                  background: meetingFlowBannerStyle.background,
+                  boxShadow: meetingFlowBannerStyle.boxShadow,
+                }}
+                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                 style={{
-                  boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.02)",
+                  width: "261px",
+                  padding: "13px 19px",
+                  gap: "10px",
+                  borderRadius: "21px",
+                  isolation: "isolate",
+                  backdropFilter: "blur(1.6px)",
+                  WebkitBackdropFilter: "blur(1.6px)",
+                  filter: "drop-shadow(0px 4px 26.5px rgba(132, 132, 132, 0.19))",
                 }}
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[9px] font-bold text-emerald-600">STT 실시간 인식 중</span>
-                </div>
-                <p className="text-[10px] leading-relaxed text-slate-700 font-medium max-h-[40px] overflow-y-auto">
-                  {sttTranscript} <span className="text-emerald-600/80">{interimTranscript}</span>
-                </p>
-              </div>
+                <AnimatePresence mode="wait" initial={false}>
+                  {meetingFlowBannerStatus === "generating" ? (
+                    <motion.div
+                      key="generating"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex flex-col items-start"
+                      style={{ width: "194px", gap: "2px" }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontStyle: "normal",
+                          fontWeight: 400,
+                          fontSize: "9px",
+                          lineHeight: "15px",
+                          color: "#A1B1B6",
+                        }}
+                      >
+                        AI 노드 생성중...
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontStyle: "normal",
+                          fontWeight: 400,
+                          fontSize: "11px",
+                          lineHeight: "15px",
+                          color: "#139D8C",
+                        }}
+                      >
+                        Nodi가 회의록에 아이디어를 추가중입니다!
+                      </span>
+                    </motion.div>
+                  ) : meetingFlowBannerStatus === "stt" ? (
+                    <motion.div
+                      key="stt"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex flex-col items-start"
+                      style={{ width: "194px", gap: "2px" }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "9px",
+                          lineHeight: "15px",
+                          color: "#A1B1B6",
+                        }}
+                      >
+                        AI 인식중...
+                      </span>
+                      <p
+                        className="max-h-[30px] overflow-y-auto"
+                        style={{
+                          width: "194px",
+                          margin: 0,
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "11px",
+                          lineHeight: "15px",
+                          color: "#139D8C",
+                        }}
+                      >
+                        {displaySttText}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="idle"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.25 }}
+                      className="flex flex-col items-start"
+                      style={{ width: "194px", gap: "2px" }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "9px",
+                          lineHeight: "15px",
+                          color: "#A1B1B6",
+                        }}
+                      >
+                        회의 종료
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "11px",
+                          lineHeight: "14px",
+                          color: "#444859",
+                        }}
+                      >
+                        현재 Nodi에 팀원이 함께 있지 않습니다.
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "'Pretendard Variable', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "11px",
+                          lineHeight: "14px",
+                          color: "#139D8C",
+                        }}
+                      >
+                        보이스로 아이디어를 공유해주세요!
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             ) : null}
 
             {/* Row 2: Timeline Scroll List (Frame 1410167878 & Frame 1410167877) */}
@@ -492,7 +667,7 @@ export default function RightAgentDrawer({
               className="flex flex-col overflow-y-auto overflow-x-hidden pr-1 pb-24 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-white/40 [&::-webkit-scrollbar-track]:rounded-[17px] [&::-webkit-scrollbar-thumb]:bg-[#A4DCCD] [&::-webkit-scrollbar-thumb]:rounded-[17px]"
               style={{
                 width: "264px",
-                height: isSimulationActive ? "230px" : isSttActive ? "290px" : "364px",
+                height: isSimulationActive ? "230px" : showMeetingFlowBanner ? "279px" : "364px",
                 gap: "10px",
                 scrollbarWidth: "thin",
               }}
@@ -515,25 +690,12 @@ export default function RightAgentDrawer({
                 </div>
               )}
 
-              {isSeededProject && isSimulationCompleted && !isSimulationActive && (
-                <div
-                  className="w-full rounded-[14px] bg-slate-50 border border-slate-200 p-3 flex flex-col gap-1.5 shrink-0 mb-1"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    <span className="text-[10px] font-bold text-slate-600">시뮬레이션 완료됨</span>
-                  </div>
-                  <p className="text-[9.5px] text-slate-600 leading-normal">
-                    현재 Nodi에 다른 팀원이 함께 있지 않습니다. 보이스를 통해 아이디어를 공유해주세요!
-                  </p>
-                </div>
-              )}
               {timelineItems.length === 0 ? (
                 <div
                   className="flex flex-col items-center justify-center border border-dashed border-[#CDE9E9] bg-white/10 p-6 text-center"
                   style={{
                     borderRadius: "21px",
-                    height: isSttActive ? "230px" : "300px",
+                    height: showMeetingFlowBanner ? "230px" : "300px",
                     width: "261px",
                   }}
                 >
