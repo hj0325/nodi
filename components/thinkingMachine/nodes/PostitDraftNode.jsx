@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Send } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function PostitDraftNode({ id, data, selected }) {
   const text = typeof data?.text === "string" ? data.text : "";
@@ -9,10 +10,17 @@ export default function PostitDraftNode({ id, data, selected }) {
   const isSubmitting = Boolean(data?.isSubmitting);
 
   return (
-    <div
+    <motion.div
       className={`relative h-full w-full overflow-hidden rounded-[22px] border ${
         selected ? "border-teal-300 ring-2 ring-teal-200/70" : "border-white/70"
       } bg-white/80 shadow-[0_10px_24px_rgba(0,0,0,0.12)] backdrop-blur-[10px]`}
+      initial={{ scale: 0.4, opacity: 0, y: 15 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 170,
+        damping: 15,
+      }}
     >
       <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-r from-amber-100/70 to-lime-100/50" />
       <div className="relative flex h-full w-full flex-col gap-1.5 px-3 pb-3 pt-3">
@@ -41,6 +49,6 @@ export default function PostitDraftNode({ id, data, selected }) {
           className="nodrag nopan min-h-0 flex-1 resize-none rounded-[16px] border border-white/60 bg-white/50 px-2.5 py-2 text-[11px] leading-[1.4] text-slate-700 outline-none placeholder:text-slate-400 focus:border-teal-300 disabled:opacity-70"
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

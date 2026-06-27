@@ -2,6 +2,7 @@
 
 import { Image as ImageIcon, Loader2, Send } from "lucide-react";
 import { useRef } from "react";
+import { motion } from "framer-motion";
 
 export default function ImageDraftNode({ id, data, selected }) {
   const inputRef = useRef(null);
@@ -16,10 +17,17 @@ export default function ImageDraftNode({ id, data, selected }) {
   const canSubmit = Boolean(imageUrl) || Boolean(caption.trim());
 
   return (
-    <div
+    <motion.div
       className={`relative h-full w-full overflow-hidden rounded-[22px] border ${
         selected ? "border-teal-300 ring-2 ring-teal-200/70" : "border-white/70"
       } bg-white/78 shadow-[0_10px_24px_rgba(0,0,0,0.12)] backdrop-blur-[10px]`}
+      initial={{ scale: 0.4, opacity: 0, y: 15 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 170,
+        damping: 15,
+      }}
     >
       <div className="absolute right-2.5 top-2.5 z-10">
         <button
@@ -84,6 +92,6 @@ export default function ImageDraftNode({ id, data, selected }) {
           className="nodrag nopan w-full resize-none rounded-[16px] border border-white/60 bg-white/50 px-2.5 py-2 text-[11px] leading-[1.4] text-slate-700 outline-none placeholder:text-slate-400 focus:border-teal-300 disabled:opacity-70"
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

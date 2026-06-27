@@ -1,6 +1,5 @@
 "use client";
 
-import { BaseEdge } from "reactflow";
 import { getTypeMeta } from "@/lib/thinkingMachine/nodeMeta";
 import { getAlignmentVisualMeta } from "@/lib/thinkingMachine/reasoningAlignment";
 
@@ -380,8 +379,11 @@ export default function ConnectorEdge({
           <stop offset="100%" stopColor={endColor} />
         </linearGradient>
       </defs>
-      <BaseEdge
-        path={path}
+      <path
+        d={path}
+        pathLength="1"
+        className={`react-flow__edge-path ${lineDash ? "animate-fade-edge" : "animate-draw-edge"}`}
+        fill="none"
         style={{
           stroke: underlayStroke,
           strokeWidth: primaryWidth + 2.2,
@@ -392,9 +394,12 @@ export default function ConnectorEdge({
           strokeDasharray: lineDash,
         }}
       />
-      <BaseEdge
+      <path
         id={id}
-        path={path}
+        d={path}
+        pathLength="1"
+        className={`react-flow__edge-path ${lineDash ? "animate-fade-edge" : "animate-draw-edge"}`}
+        fill="none"
         style={{
           stroke: primaryStroke,
           strokeWidth: primaryWidth,

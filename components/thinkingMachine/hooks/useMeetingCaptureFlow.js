@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { ingestMeetingChunk } from "@/lib/thinkingMachine/apiClient";
 import { mergeMeetingMemory } from "@/lib/thinkingMachine/meetingMemory";
 import { toConnectorEdges, getEdgeContinuationFlag } from "@/lib/thinkingMachine/connectorEdges";
@@ -35,13 +35,27 @@ export function useMeetingCaptureFlow({
   recordProjectActivity,
   meetingState = "active",
 }) {
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
+
   const applyMeetingGraphPatch = useCallback((graphPatch = {}, captureMeetingState = meetingState, speakerName = null) => {
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+
     const incomingNodes = Array.isArray(graphPatch?.nodes) ? graphPatch.nodes : [];
     const incomingEdges = Array.isArray(graphPatch?.edges) ? graphPatch.edges : [];
     if (!incomingNodes.length && !incomingEdges.length) {
       return {
-        nextNodes: nodes,
-        nextEdges: edges,
+        nextNodes: currentNodes,
+        nextEdges: currentEdges,
         createdNodeIds: [],
       };
     }
@@ -62,25 +76,29 @@ export function useMeetingCaptureFlow({
     const anchorEdge =
       incomingEdges.find((edge) => getEdgeContinuationFlag(edge)) || incomingEdges[0];
     const anchorNode = anchorEdge?.source
-      ? nodes.find((node) => node.id === anchorEdge.source)
+      ? currentNodes.find((node) => node.id === anchorEdge.source)
       : null;
 
     let placedNodes = rawNewNodes;
-    if (nodes.length) {
+    if (currentNodes.length) {
       placedNodes =
         isOffMeeting && anchorNode
-          ? shiftClusterBelowAnchor(anchorNode, rawNewNodes, nodes, edges)
-          : shiftClusterRightOfExisting(nodes, rawNewNodes);
+          ? shiftClusterBelowAnchor(anchorNode, rawNewNodes, currentNodes, currentEdges)
+          : shiftClusterRightOfExisting(currentNodes, rawNewNodes);
     }
 
-    const mergedNodes = [...nodes, ...placedNodes];
-    const existingEdgeIds = new Set(edges.map((edge) => edge.id));
+    const mergedNodes = [...currentNodes, ...placedNodes];
+    const existingEdgeIds = new Set(currentEdges.map((edge) => edge.id));
     const nextRawEdges = incomingEdges.filter((edge) => edge?.id && !existingEdgeIds.has(edge.id));
-    const nextConnectorEdges = toConnectorEdges(nextRawEdges, mergedNodes, edges);
-    const nextEdges = [...edges, ...nextConnectorEdges];
+    const nextConnectorEdges = toConnectorEdges(nextRawEdges, mergedNodes, currentEdges);
+    const nextEdges = [...currentEdges, ...nextConnectorEdges];
     const relaidNodes = isOffMeeting
       ? mergedNodes
       : relayoutTopLevelThinkingNodes(mergedNodes, nextEdges);
+
+    // Update Refs synchronously to prevent subsequent updates in the same tick from using stale graphs
+    nodesRef.current = relaidNodes;
+    edgesRef.current = nextEdges;
 
     setNodes(relaidNodes);
     setEdges(nextEdges);
@@ -90,7 +108,7 @@ export function useMeetingCaptureFlow({
       nextEdges,
       createdNodeIds: placedNodes.map((node) => node.id),
     };
-  }, [currentUserId, currentUserName, edges, meetingState, nodes, setEdges, setNodes]);
+  }, [currentUserId, currentUserName, setEdges, setNodes, meetingState]);
 
   const handleMeetingCaptureSubmit = useCallback(async (chunkText, overrideSpeakerName = null) => {
     if (!projectId) return;
