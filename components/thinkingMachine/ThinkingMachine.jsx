@@ -2460,20 +2460,6 @@ export default function ThinkingMachine({
 
     return (
         <div className="w-full h-screen relative flex flex-col overflow-hidden bg-slate-50">
-            <div
-                className="pointer-events-none absolute bottom-7 left-6 z-[20] flex h-[24.5px] w-[157px] items-center whitespace-nowrap"
-                style={{
-                    fontFamily: '"Pretendard Variable", "Instrument Sans", sans-serif',
-                    fontStyle: "normal",
-                    fontWeight: 600,
-                    fontSize: "13.59805px",
-                    lineHeight: "180%",
-                    letterSpacing: "0.14em",
-                    color: "#4B5D7B",
-                }}
-            >
-                THINKING MACHINE
-            </div>
             <TopBar
                 projectTitle={projectTitle}
                 onProjectTitleChange={setProjectTitle}
