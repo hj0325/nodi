@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import {
   Clock,
   Mic,
@@ -219,18 +219,25 @@ export default function RightAgentDrawer({
 
   const showMeetingFlowBanner = isSeededProject && isSimulationCompleted && !isSimulationActive;
   const [pinnedSttText, setPinnedSttText] = useState("");
+  const prevMeetingCaptureLoadingRef = useRef(false);
 
   useEffect(() => {
     const live = `${sttTranscript || ""} ${interimTranscript || ""}`.trim();
     if (live) setPinnedSttText(live);
-    if (!isListening && !isMeetingCaptureLoading) setPinnedSttText("");
-  }, [sttTranscript, interimTranscript, isListening, isMeetingCaptureLoading]);
+  }, [sttTranscript, interimTranscript]);
+
+  useEffect(() => {
+    if (prevMeetingCaptureLoadingRef.current && !isMeetingCaptureLoading) {
+      setPinnedSttText("");
+    }
+    prevMeetingCaptureLoadingRef.current = isMeetingCaptureLoading;
+  }, [isMeetingCaptureLoading]);
 
   const meetingFlowBannerStatus = useMemo(() => {
     if (isMeetingCaptureLoading) return "generating";
-    if (isListening) return "stt";
+    if (isListening || pinnedSttText) return "stt";
     return "idle";
-  }, [isMeetingCaptureLoading, isListening]);
+  }, [isMeetingCaptureLoading, isListening, pinnedSttText]);
 
   const meetingFlowBannerStyle = useMemo(() => {
     if (meetingFlowBannerStatus === "generating") {
@@ -365,8 +372,9 @@ export default function RightAgentDrawer({
           }}
         >
           {/* Frame 1410167879 (Absolute Wrapper inside Panel) */}
-          <div
-            className="absolute flex flex-col items-start"
+          <LayoutGroup id="tm-drawer-body">
+          <motion.div
+            className="absolute flex min-h-0 flex-col items-start"
             style={{
               width: "272px",
               height: "417px",
@@ -501,68 +509,90 @@ export default function RightAgentDrawer({
             </div>
 
             {/* Simulation speech or unified post-meeting flow banner */}
-            {isSimulationActive ? (
-              <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="popLayout" initial={false}>
+              {isSimulationActive ? (
                 <motion.div
-                  key={`sim-utterance-${simulationStep}`}
-                  initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-                  className="relative flex w-full shrink-0 flex-col items-start self-start"
-                  style={{
-                    width: "261px",
-                    minHeight: "75px",
-                    padding: "13px 19px",
-                    gap: "10px",
-                    borderRadius: "21px",
-                    isolation: "isolate",
-                    background: "rgba(255, 255, 255, 0.22)",
-                    boxShadow:
-                      "inset 0px 4px 10.9px #FFFFFF, inset 0px -6px 9.6px rgba(255, 255, 255, 0.61)",
-                    backdropFilter: "blur(1.6px)",
-                    WebkitBackdropFilter: "blur(1.6px)",
-                    filter: "drop-shadow(0px 4px 26.5px rgba(132, 132, 132, 0.19))",
-                  }}
+                  key="simulation-slot"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-full shrink-0"
                 >
-                  <div
-                    className="flex flex-col items-start"
-                    style={{ width: "212px", gap: "2px" }}
-                  >
-                    <span
+                  <AnimatePresence mode="wait" initial>
+                    <motion.div
+                      key={`sim-utterance-${simulationStep}`}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{
+                        duration: simulationStep === 0 ? 0.45 : 0.38,
+                        delay: simulationStep === 0 ? 0.18 : 0,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="relative flex w-full shrink-0 flex-col items-start self-start"
                       style={{
-                        fontFamily: "'Pretendard Variable', sans-serif",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                        fontSize: "9px",
-                        lineHeight: "15px",
-                        color: "#8B979B",
+                        width: "261px",
+                        minHeight: "75px",
+                        padding: "13px 19px",
+                        gap: "10px",
+                        borderRadius: "21px",
+                        isolation: "isolate",
+                        background: "rgba(255, 255, 255, 0.22)",
+                        boxShadow:
+                          "inset 0px 4px 10.9px #FFFFFF, inset 0px -6px 9.6px rgba(255, 255, 255, 0.61)",
+                        backdropFilter: "blur(1.6px)",
+                        WebkitBackdropFilter: "blur(1.6px)",
+                        filter: "drop-shadow(0px 4px 26.5px rgba(132, 132, 132, 0.19))",
                       }}
                     >
-                      {simulationSpeaker}
-                    </span>
-                    <p
-                      style={{
-                        width: "212px",
-                        margin: 0,
-                        fontFamily: "'Pretendard Variable', sans-serif",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                        fontSize: "11px",
-                        lineHeight: "15px",
-                        color: "#444859",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "keep-all",
-                      }}
-                    >
-                      {simulationText}
-                    </p>
-                  </div>
+                      <div
+                        className="flex flex-col items-start"
+                        style={{ width: "212px", gap: "2px" }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: "'Pretendard Variable', sans-serif",
+                            fontStyle: "normal",
+                            fontWeight: 400,
+                            fontSize: "9px",
+                            lineHeight: "15px",
+                            color: "#8B979B",
+                          }}
+                        >
+                          {simulationSpeaker}
+                        </span>
+                        <p
+                          style={{
+                            width: "212px",
+                            margin: 0,
+                            fontFamily: "'Pretendard Variable', sans-serif",
+                            fontStyle: "normal",
+                            fontWeight: 400,
+                            fontSize: "11px",
+                            lineHeight: "15px",
+                            color: "#444859",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "keep-all",
+                          }}
+                        >
+                          {simulationText}
+                        </p>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
                 </motion.div>
-              </AnimatePresence>
-            ) : showMeetingFlowBanner ? (
+              ) : showMeetingFlowBanner ? (
+                <motion.div
+                  key="meeting-flow-slot"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-full shrink-0"
+                  style={{ overflow: "hidden" }}
+                >
               <motion.div
-                layout
                 className="relative flex shrink-0 flex-col items-start overflow-hidden"
                 initial={false}
                 animate={{
@@ -570,7 +600,7 @@ export default function RightAgentDrawer({
                   background: meetingFlowBannerStyle.background,
                   boxShadow: meetingFlowBannerStyle.boxShadow,
                 }}
-                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 style={{
                   width: "261px",
                   padding: "13px 19px",
@@ -589,7 +619,7 @@ export default function RightAgentDrawer({
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
                       className="flex flex-col items-start"
                       style={{ width: "194px", gap: "2px" }}
                     >
@@ -624,7 +654,7 @@ export default function RightAgentDrawer({
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
                       className="flex flex-col items-start"
                       style={{ width: "194px", gap: "2px" }}
                     >
@@ -701,10 +731,14 @@ export default function RightAgentDrawer({
                   )}
                 </AnimatePresence>
               </motion.div>
-            ) : null}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
 
             {/* Row 2: Timeline Scroll List (Frame 1410167878 & Frame 1410167877) */}
-            <div
+            <motion.div
+              layout="position"
+              transition={{ layout: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
               className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pr-1 pb-24 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-white/40 [&::-webkit-scrollbar-track]:rounded-[17px] [&::-webkit-scrollbar-thumb]:bg-[#A4DCCD] [&::-webkit-scrollbar-thumb]:rounded-[17px]"
               style={{
                 width: "264px",
@@ -916,8 +950,9 @@ export default function RightAgentDrawer({
                   );
                 })
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
+          </LayoutGroup>
 
           {/* Bottom Fade Mask Gradient Overlay */}
           <div

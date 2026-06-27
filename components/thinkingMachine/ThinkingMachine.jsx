@@ -2052,20 +2052,21 @@ export default function ThinkingMachine({
     useEffect(() => {
         let timer;
         if (simulation.isActive && simulation.fullText && simulation.typeIndex < simulation.fullText.length) {
+            const isFirstCharacter = simulation.step === 0 && simulation.typeIndex === 0;
             timer = setTimeout(() => {
                 setSimulation((prev) => ({
                     ...prev,
                     typeIndex: prev.typeIndex + 1,
                     text: prev.fullText.slice(0, prev.typeIndex + 1),
                 }));
-            }, 30);
+            }, isFirstCharacter ? 520 : 30);
         } else if (simulation.isActive && simulation.fullText && simulation.typeIndex === simulation.fullText.length) {
             timer = setTimeout(() => {
                 void handleSimulationSubmitCurrentStep();
             }, 2500);
         }
         return () => clearTimeout(timer);
-    }, [simulation.isActive, simulation.fullText, simulation.typeIndex, handleSimulationSubmitCurrentStep]);
+    }, [simulation.isActive, simulation.fullText, simulation.typeIndex, simulation.step, handleSimulationSubmitCurrentStep]);
 
     const handleStartSimulation = useCallback(async () => {
         const isCompleted = localStorage.getItem(`simulation-completed-${projectId}`) === "true";
@@ -2120,6 +2121,16 @@ export default function ThinkingMachine({
     const recognitionRef = useRef(null);
     const silenceTimeoutRef = useRef(null);
     const transcriptBufferRef = useRef("");
+
+    const handleToggleListening = useCallback(() => {
+        if (isListening) {
+            const pending = transcriptBufferRef.current.trim();
+            if (pending) {
+                setIsMeetingCaptureLoading(true);
+            }
+        }
+        setIsListening((prev) => !prev);
+    }, [isListening]);
 
     // 최신 콜백과 상태값을 참조하기 위한 ref 정의 (의존성 변화로 인한 무한 리셋 방지)
     const handleMeetingCaptureSubmitRef = useRef(handleMeetingCaptureSubmit);
@@ -2516,7 +2527,7 @@ export default function ThinkingMachine({
                             alignmentSummary={alignmentSummary}
                             currentUserRole={effectiveCurrentUserRole}
                             isListening={isListening}
-                            onToggleListening={() => setIsListening(!isListening)}
+                            onToggleListening={handleToggleListening}
                             sttTranscript={sttTranscript}
                             interimTranscript={interimTranscript}
                             meetingSeconds={meetingSeconds}
