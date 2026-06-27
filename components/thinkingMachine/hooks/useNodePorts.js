@@ -1,7 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { getEdgeContinuationFlag, isVerticalConnectorEdge } from "@/lib/thinkingMachine/connectorEdges";
+import {
+  getEdgeContinuationFlag,
+  isVerticalConnectorEdge,
+  SOURCE_HANDLE_ID,
+  TARGET_HANDLE_ID,
+  BOTTOM_SOURCE_HANDLE_ID,
+  TOP_TARGET_HANDLE_ID,
+} from "@/lib/thinkingMachine/connectorEdges";
 
 export function useNodePorts({
   nodes,
@@ -19,7 +26,6 @@ export function useNodePorts({
   const portVisibilityByNode = useMemo(() => {
     const map = new Map();
     edges.forEach((edge) => {
-      const isVertical = isVerticalConnectorEdge(edge);
       if (edge?.source) {
         const current = map.get(edge.source) || {
           hasLeftPort: false,
@@ -27,10 +33,17 @@ export function useNodePorts({
           hasTopPort: false,
           hasBottomPort: false,
         };
-        if (isVertical) {
+        if (edge.sourceHandle === BOTTOM_SOURCE_HANDLE_ID) {
           current.hasBottomPort = true;
-        } else {
+        } else if (edge.sourceHandle === SOURCE_HANDLE_ID) {
           current.hasRightPort = true;
+        } else {
+          const isVertical = isVerticalConnectorEdge(edge);
+          if (isVertical) {
+            current.hasBottomPort = true;
+          } else {
+            current.hasRightPort = true;
+          }
         }
         map.set(edge.source, current);
       }
@@ -41,10 +54,17 @@ export function useNodePorts({
           hasTopPort: false,
           hasBottomPort: false,
         };
-        if (isVertical) {
+        if (edge.targetHandle === TOP_TARGET_HANDLE_ID) {
           current.hasTopPort = true;
-        } else {
+        } else if (edge.targetHandle === TARGET_HANDLE_ID) {
           current.hasLeftPort = true;
+        } else {
+          const isVertical = isVerticalConnectorEdge(edge);
+          if (isVertical) {
+            current.hasTopPort = true;
+          } else {
+            current.hasLeftPort = true;
+          }
         }
         map.set(edge.target, current);
       }

@@ -296,6 +296,8 @@ export default function ConnectorEdge({
   sourceY,
   targetX,
   targetY,
+  sourceHandleId,
+  targetHandleId,
   data,
   selected,
 }) {
@@ -303,7 +305,13 @@ export default function ConnectorEdge({
   const targetOffsetY = 0;
   const alignmentMeta = getAlignmentVisualMeta(data?.alignmentState);
   const lineWidth = toFiniteNumber(data?.lineWidth, DEFAULT_LINE_WIDTH);
-  const lineDash = data?.isContinuation ? "5 5" : (data?.alignmentLineDash || alignmentMeta.lineDash);
+  const sourceIsOffMeeting = Boolean(data?.sourceIsOffMeeting);
+  const targetIsOffMeeting = Boolean(data?.targetIsOffMeeting);
+  const isOffMeetingEdge = sourceIsOffMeeting || targetIsOffMeeting;
+  const lineDash =
+    data?.isContinuation || isOffMeetingEdge
+      ? "5 5"
+      : data?.alignmentLineDash || alignmentMeta.lineDash;
 
   // 드래그 중 서브픽셀 변동으로 경로 후보가 바뀌며 라벨·선이 떨리는 것을 줄임
   const sx = Math.round(sourceX);
@@ -311,15 +319,26 @@ export default function ConnectorEdge({
   const sy = Math.round(sourceY);
   const ty = Math.round(targetY);
 
-  const isContinuation = Boolean(data?.isContinuation);
-  const isVertical = isContinuation && ty > sy + 20;
+  const isStartVertical = sourceHandleId === "bottom-source";
+  const isEndVertical = targetHandleId === "top-target";
+
   let path;
   let controlDistance;
 
-  if (isVertical) {
+  if (isStartVertical && isEndVertical) {
     const dy = ty - sy;
     controlDistance = Math.max(Math.abs(dy) * 0.38, 52);
     path = `M ${sx} ${sy} C ${sx} ${sy + controlDistance}, ${tx} ${ty - controlDistance}, ${tx} ${ty}`;
+  } else if (!isStartVertical && isEndVertical) {
+    const dx = tx - sx;
+    const dy = ty - sy;
+    controlDistance = Math.max(Math.abs(dx) * 0.45, Math.abs(dy) * 0.38, 40);
+    path = `M ${sx} ${sy} C ${sx + controlDistance} ${sy}, ${tx} ${ty - controlDistance}, ${tx} ${ty}`;
+  } else if (isStartVertical && !isEndVertical) {
+    const dx = tx - sx;
+    const dy = ty - sy;
+    controlDistance = Math.max(Math.abs(dx) * 0.45, Math.abs(dy) * 0.38, 40);
+    path = `M ${sx} ${sy} C ${sx} ${sy + controlDistance}, ${tx - controlDistance} ${ty}, ${tx} ${ty}`;
   } else {
     const dx = tx - sx;
     controlDistance = Math.max(Math.abs(dx) * 0.45, 40);
@@ -339,9 +358,6 @@ export default function ConnectorEdge({
   const sourceTypeMeta = getTypeMeta(data?.sourceCategory);
   const isSelected = Boolean(selected);
   const underlayStroke = isSelected ? "rgba(255, 255, 255, 0.24)" : "rgba(255, 255, 255, 0.12)";
-  
-  const sourceIsOffMeeting = Boolean(data?.sourceIsOffMeeting);
-  const targetIsOffMeeting = Boolean(data?.targetIsOffMeeting);
 
   let startColor = "#41D9D2";
   let endColor = "#BAFFE2";
@@ -363,6 +379,9 @@ export default function ConnectorEdge({
   const endDotColor = isSelected ? "rgba(255, 255, 255, 0.92)" : endColor;
 
   const primaryWidth = isSelected ? lineWidth + 0.4 : 1.3;
+  const isDashedEdge = Boolean(lineDash);
+  const edgePathClassName = `react-flow__edge-path ${isDashedEdge ? "tm-dashed-edge animate-fade-edge" : "animate-draw-edge"}`;
+  const edgePathProps = isDashedEdge ? {} : { pathLength: "1" };
 
   return (
     <g className={`tm-connector-edge ${isSelected ? "is-selected" : ""}`}>
@@ -381,8 +400,8 @@ export default function ConnectorEdge({
       </defs>
       <path
         d={path}
-        pathLength="1"
-        className={`react-flow__edge-path ${lineDash ? "animate-fade-edge" : "animate-draw-edge"}`}
+        {...edgePathProps}
+        className={edgePathClassName}
         fill="none"
         style={{
           stroke: underlayStroke,
@@ -391,14 +410,14 @@ export default function ConnectorEdge({
           strokeLinejoin: "round",
           opacity: isSelected ? 0.95 : 0.82,
           filter: "none",
-          strokeDasharray: lineDash,
+          ...(isDashedEdge ? { strokeDasharray: lineDash } : {}),
         }}
       />
       <path
         id={id}
         d={path}
-        pathLength="1"
-        className={`react-flow__edge-path ${lineDash ? "animate-fade-edge" : "animate-draw-edge"}`}
+        {...edgePathProps}
+        className={edgePathClassName}
         fill="none"
         style={{
           stroke: primaryStroke,
@@ -409,7 +428,7 @@ export default function ConnectorEdge({
           filter: isSelected
             ? "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.10))"
             : "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.08))",
-          strokeDasharray: lineDash,
+          ...(isDashedEdge ? { strokeDasharray: lineDash } : {}),
         }}
       />
 
