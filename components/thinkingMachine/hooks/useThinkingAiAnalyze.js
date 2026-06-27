@@ -1,11 +1,12 @@
 import { useCallback } from "react";
 import { analyze } from "@/lib/thinkingMachine/apiClient";
-import { toConnectorEdges } from "@/lib/thinkingMachine/connectorEdges";
+import { toConnectorEdges, getEdgeContinuationFlag } from "@/lib/thinkingMachine/connectorEdges";
 import { toReactFlowNode } from "@/lib/thinkingMachine/reactflowTransforms";
 import { getNodeSnapshot } from "@/components/thinkingMachine/utils/graphSnapshots";
 import { mergeSuggestionUnique } from "@/components/thinkingMachine/utils/suggestionUtils";
 import {
   relayoutTopLevelThinkingNodes,
+  shiftClusterBelowAnchor,
   shiftClusterRelativeToAnchor,
   shiftClusterRightOfExisting,
 } from "@/lib/thinkingMachine/graphMerge";
@@ -81,13 +82,40 @@ export function useThinkingAiAnalyze({
 
         const suggestEdge = data.edges.find((e) => e.id.startsWith("e-suggest-"));
         const highlightedMainNodeId = suggestEdge ? suggestEdge.source : null;
+        const rawEdges = data.edges.filter((e) => !e.id.startsWith("e-suggest-"));
+        const crossAnchorEdge = rawEdges.find(
+          (edge) => getEdgeContinuationFlag(edge) && nodes.some((node) => node.id === edge.source)
+        );
+        const crossAnchorNode = crossAnchorEdge
+          ? nodes.find((node) => node.id === crossAnchorEdge.source)
+          : null;
+        const isOffMeeting = meetingState === "ended";
 
-        const rawNewNodes = userNodeDatas.map((n) => toReactFlowNode(n, highlightedMainNodeId));
-        const enrichedNodes = inputContextNode
-          ? shiftClusterRelativeToAnchor(inputContextNode, rawNewNodes)
-          : nodes.length
-          ? shiftClusterRightOfExisting(nodes, rawNewNodes)
-          : rawNewNodes;
+        const rawNewNodes = userNodeDatas.map((n) =>
+          toReactFlowNode(
+            {
+              ...n,
+              data: {
+                ...n.data,
+                isOffMeeting: isOffMeeting || Boolean(n.data?.isOffMeeting),
+              },
+            },
+            highlightedMainNodeId
+          )
+        );
+
+        let enrichedNodes;
+        if (inputContextNode) {
+          enrichedNodes = isOffMeeting
+            ? shiftClusterBelowAnchor(inputContextNode, rawNewNodes, nodes, edges)
+            : shiftClusterRelativeToAnchor(inputContextNode, rawNewNodes, undefined, nodes);
+        } else if (isOffMeeting && crossAnchorNode) {
+          enrichedNodes = shiftClusterBelowAnchor(crossAnchorNode, rawNewNodes, nodes, [...edges, ...rawEdges]);
+        } else if (nodes.length) {
+          enrichedNodes = shiftClusterRightOfExisting(nodes, rawNewNodes);
+        } else {
+          enrichedNodes = rawNewNodes;
+        }
         const viewportTargets = inputContextNode ? [inputContextNode, ...enrichedNodes] : enrichedNodes;
 
         if (suggestionNodeData) {
@@ -115,7 +143,6 @@ export function useThinkingAiAnalyze({
           className: n.className || "",
         }));
         const mergedNodes = [...updatedExistingNodes, ...enrichedNodes];
-        const rawEdges = data.edges.filter((e) => !e.id.startsWith("e-suggest-"));
         const newReactFlowEdges = toConnectorEdges(
           rawEdges.map((e) => ({
             ...e,
@@ -125,7 +152,10 @@ export function useThinkingAiAnalyze({
           edges
         );
         const nextEdges = [...edges, ...newReactFlowEdges];
-        const relaidNodes = relayoutTopLevelThinkingNodes(mergedNodes, nextEdges);
+        const shouldRelayout = !(isOffMeeting && (inputContextNode || crossAnchorNode));
+        const relaidNodes = shouldRelayout
+          ? relayoutTopLevelThinkingNodes(mergedNodes, nextEdges)
+          : mergedNodes;
         const insertedIds = new Set(enrichedNodes.map((node) => node.id));
         const relaidViewportTargets = inputContextNode
           ? relaidNodes.filter((node) => node.id === inputContextNode.id || insertedIds.has(node.id))
@@ -187,6 +217,7 @@ export function useThinkingAiAnalyze({
       setNodes,
       setSuggestions,
       stage,
+      meetingState,
     ]
   );
 
