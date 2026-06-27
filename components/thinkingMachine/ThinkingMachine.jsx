@@ -36,7 +36,7 @@ import {
 } from "@/lib/thinkingMachine/participantMeta";
 import { buildReasoningAlignmentAnalysis } from "@/lib/thinkingMachine/reasoningAlignment";
 import { buildTeamConflictAnalysis } from "@/lib/thinkingMachine/conflictAnalysis";
-import { explainConflict } from "@/lib/thinkingMachine/apiClient";
+import { explainConflict, leaveAllOtherMembers, restoreOriginalMembers } from "@/lib/thinkingMachine/apiClient";
 import {
     getReasoningModeProfile,
     getRoleMeta,
@@ -56,6 +56,44 @@ const MOCK_CURRENT_USER_ID = "mock-user-1";
 const MOCK_CURRENT_USER_ROLE = "owner";
 const AUTO_FIT_MAX_ZOOM = 1;
 
+const SIMULATION_SCRIPTS = {
+  "project-ai-search": [
+    { speaker: "Jinki", text: "사용자가 검색어를 입력하기 전에 검색 의도를 정교하게 예측하면 좋겠어요." },
+    { speaker: "Taeeun", text: "맞아요. 단순 검색 결과 리스트보다, 사용자가 관련 아이디어를 유기적으로 헤쳐 나가는 탐색 경험 자체가 중요하지 않을까요?" },
+    { speaker: "Eunsol", text: "그렇다면 사용자가 따로 액션을 취하기 전에, AI가 흐름에 맞는 관련 콘텐츠나 노드를 먼저 제안하는 방식도 가능할 것 같습니다." },
+    { speaker: "Taeeun", text: "좋습니다. 검색창 아래에 최근 탐색한 맥락에 맞춤 추천 노드들을 배치해 탐색 진입 장벽을 대폭 줄여봐요." },
+    { speaker: "Jinki", text: "훌륭한 아이디어네요! 그럼 저는 의도 예측 모델을 구현하고, Taeeun님은 탐색 노드 UI 레이아웃 기획안을 다듬어 보시죠." }
+  ],
+  "project-smart-home": [
+    { speaker: "Sooyun", text: "현재의 스마트홈은 단순 끄고 켜는 제어 위주인데, 집이 사용자의 전반적인 상태를 먼저 깊게 이해하면 좋겠어요." },
+    { speaker: "Jimin", text: "동감합니다. 예를 들어 조명이나 가전제품들이 사용자의 표정이나 맥락, 감정에 따라 부드럽게 반응하면 어떨까요?" },
+    { speaker: "Eunsol", text: "좋은 생각이네요. 센서 데이터들을 종합해서 AI 에이전트가 상황에 맞는 행동을 먼저 제안하는 흐름이면 더 완벽하겠습니다." },
+    { speaker: "Taeeun", text: "개인 정보가 중요하니 영상이나 목소리 분석은 온디바이스 AI로 기기 내부에서만 안전하게 동작해야 해요." },
+    { speaker: "Sooyun", text: "핵심 요소를 잘 짚어주셨어요! 그럼 에이전트 자동화 제안 시나리오를 구성하고 온디바이스 구현 가능성 검토에 착수합시다." }
+  ],
+  "project-ai-meeting": [
+    { speaker: "Sooyun", text: "회의를 기록하는 데서 끝나는 게 아니라 회의록 자체가 AI를 통해 생각의 유기적인 흐름을 보여주면 좋겠어요." },
+    { speaker: "Jimin", text: "맞아요! 발화 내용을 분석해서 중요한 아이디어나 연관 정보를 노드로 자동 생성할 수 있으면 좋겠습니다." },
+    { speaker: "Taeeun", text: "그리고 이번 논의뿐만 아니라 이전에 나눴던 과거의 회의 내용들과도 연결된다면 훨씬 유용한 지식 그래프가 될 거예요." },
+    { speaker: "Sooyun", text: "회의가 끝난 후 사용자가 혼자 남았을 때도 음성 아이디어를 보라색 노드로 추가 확장하는 오프라인 기능도 꼭 기획합시다." },
+    { speaker: "Jimin", text: "좋습니다. 그럼 AI 회의 노드 기획의 핵심 가치를 요약하고 지식 그래프 연동 모듈 초안을 정립해 볼까요?" }
+  ],
+  "project-onboarding-ux": [
+    { speaker: "Jiyu", text: "신규 가입 유저의 데이터 분석 결과, 첫 온보딩 화면에서의 이탈률이 대략 45%로 매우 높게 나타나고 있어요." },
+    { speaker: "Taeeun", text: "첫 진입 장벽을 낮춰야 합니다. 복잡한 튜토리얼을 생략하고 핵심 가치를 더 빨리 직접 경험하게 하는 게 관건이에요." },
+    { speaker: "Jiyu", text: "동의합니다. 가입 단계를 3단계 이하로 파격적으로 줄이고, 대신 AI 비서가 부드럽게 말로 안내해 주는 건 어떨까요?" },
+    { speaker: "Taeeun", text: "좋네요. 가입과 동시에 즉시 체험용 캔버스를 띄우고 실시간 AI 도우미가 단계별 꿀팁을 동적으로 노출해 주는 구조가 적절해 보입니다." },
+    { speaker: "Jiyu", text: "완벽하네요! 이 구성으로 온보딩 플로우 와이어프레임을 2가지 시안으로 설계해 보겠습니다." }
+  ],
+  "project-dashboard-design": [
+    { speaker: "Sooyun", text: "우리 프로젝트가 거대해지면서 팀원들이 각자의 진행 상태를 일목요연하게 한 화면에서 보고 싶어 하는 목소리가 큽니다." },
+    { speaker: "Jimin", text: "우선순위 관리가 복잡해지지 않게 각 태스크의 우선순위가 업무 데드라인과 연동되어 자동으로 수시 정리되면 편리하겠어요." },
+    { speaker: "Taeeun", text: "거기에 더해, 특정 태스크가 지연될 기미가 보이면 AI가 위험 요소를 미리 감지해서 경고나 인사이트를 알려주는 대시보드면 좋겠네요." },
+    { speaker: "Sooyun", text: "매우 혁신적인 접근이네요. 칸반 보드 뷰와 AI 인사이트 분석 위젯을 중앙에 배치하는 구조가 어울릴 것 같습니다." },
+    { speaker: "Jimin", text: "네! 그럼 이 레이아웃 구성안을 기반으로 화면 설계를 구체화해 보죠." }
+  ]
+};
+
 function cubicOut(t) {
     return 1 - Math.pow(1 - t, 3);
 }
@@ -73,7 +111,22 @@ export default function ThinkingMachine({
     const [isDrawerOpen, setIsDrawerOpen] = useState(true);
     const [drawerMode, setDrawerMode] = useState("tip");
     const [stage, setStage] = useState("Idea");
-    const [meetingState, setMeetingState] = useState("active"); // "active" or "ended"
+    const [meetingState, setMeetingState] = useState(() => {
+        if (typeof window !== "undefined" && projectId) {
+            const isSeeded = [
+                "project-ai-search",
+                "project-smart-home",
+                "project-ai-meeting",
+                "project-onboarding-ux",
+                "project-dashboard-design"
+            ].includes(projectId);
+            const isCompleted = localStorage.getItem(`simulation-completed-${projectId}`) === "true";
+            if (isSeeded && !isCompleted) {
+                return "ended";
+            }
+        }
+        return "active";
+    }); // "active" or "ended"
     const [projectTitle, setProjectTitle] = useState(initialProjectTitle);
     const [canvasMode, setCanvasMode] = useState("team");
     const [inputMode, setInputMode] = useState("workspace");
@@ -799,6 +852,165 @@ export default function ThinkingMachine({
         meetingState,
     });
 
+    // IS_SEEDED_PROJECT check
+    const IS_SEEDED_PROJECT = useMemo(() => {
+        return [
+            "project-ai-search",
+            "project-smart-home",
+            "project-ai-meeting",
+            "project-onboarding-ux",
+            "project-dashboard-design"
+        ].includes(projectId);
+    }, [projectId]);
+
+    const [simulation, setSimulation] = useState({
+        isActive: false,
+        step: 0,
+        speaker: "",
+        text: "",
+        fullText: "",
+        typeIndex: 0,
+    });
+
+    const [isSimulationCompleted, setIsSimulationCompleted] = useState(false);
+
+    // Reset simulation completed status on mount/project change so re-entering the canvas resets it
+    useEffect(() => {
+        if (typeof window !== "undefined" && projectId) {
+            localStorage.removeItem(`simulation-completed-${projectId}`);
+            setIsSimulationCompleted(false);
+            // Restore original members on entry so that all 4-5 members are visible
+            void restoreOriginalMembers(projectId).then(() => {
+                if (typeof refreshProjectCollaborationMeta === "function") {
+                    void refreshProjectCollaborationMeta();
+                }
+            }).catch((err) => {
+                console.error("Failed to restore original members on entry:", err);
+            });
+        }
+    }, [projectId, refreshProjectCollaborationMeta]);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            setIsSimulationCompleted(localStorage.getItem(`simulation-completed-${projectId}`) === "true");
+        }
+    }, [projectId, simulation.isActive]);
+
+    const handleSimulationSubmitCurrentStep = useCallback(async () => {
+        const script = SIMULATION_SCRIPTS[projectId];
+        if (!script) return;
+
+        const currentTurn = script[simulation.step];
+        if (!currentTurn) return;
+
+        try {
+            await handleMeetingCaptureSubmit(currentTurn.text, currentTurn.speaker);
+        } catch (error) {
+            console.error("Simulation step submit failed:", error);
+        }
+
+        const nextStep = simulation.step + 1;
+        if (nextStep < script.length) {
+            const nextTurn = script[nextStep];
+            setSimulation({
+                isActive: true,
+                step: nextStep,
+                speaker: nextTurn.speaker,
+                text: "",
+                fullText: nextTurn.text,
+                typeIndex: 0,
+            });
+        } else {
+            // End of simulation
+            setSimulation({
+                isActive: false,
+                step: 0,
+                speaker: "",
+                text: "",
+                fullText: "",
+                typeIndex: 0,
+            });
+            localStorage.setItem(`simulation-completed-${projectId}`, "true");
+            setMeetingState("ended");
+            try {
+                await leaveAllOtherMembers(projectId, currentUserId);
+                if (typeof refreshProjectCollaborationMeta === "function") {
+                    await refreshProjectCollaborationMeta();
+                }
+            } catch (err) {
+                console.error("Failed to update members on simulation end:", err);
+            }
+        }
+    }, [projectId, simulation.step, handleMeetingCaptureSubmit, currentUserId, refreshProjectCollaborationMeta, setMeetingState]);
+
+    useEffect(() => {
+        let timer;
+        if (simulation.isActive && simulation.fullText && simulation.typeIndex < simulation.fullText.length) {
+            timer = setTimeout(() => {
+                setSimulation((prev) => ({
+                    ...prev,
+                    typeIndex: prev.typeIndex + 1,
+                    text: prev.fullText.slice(0, prev.typeIndex + 1),
+                }));
+            }, 30);
+        } else if (simulation.isActive && simulation.fullText && simulation.typeIndex === simulation.fullText.length) {
+            timer = setTimeout(() => {
+                void handleSimulationSubmitCurrentStep();
+            }, 2500);
+        }
+        return () => clearTimeout(timer);
+    }, [simulation.isActive, simulation.fullText, simulation.typeIndex, handleSimulationSubmitCurrentStep]);
+
+    const handleStartSimulation = useCallback(async () => {
+        const isCompleted = localStorage.getItem(`simulation-completed-${projectId}`) === "true";
+        if (isCompleted) {
+            alert("현재 Nodi에 팀원이 같이 있지 않습니다. 보이스를 통해 아이디어를 말씀해주시면 추가 노드를 생성해드릴게요.");
+            return;
+        }
+
+        const script = SIMULATION_SCRIPTS[projectId];
+        if (!script) return;
+
+        try {
+            await restoreOriginalMembers(projectId);
+            if (typeof refreshProjectCollaborationMeta === "function") {
+                await refreshProjectCollaborationMeta();
+            }
+        } catch (err) {
+            console.error("Failed to restore original members:", err);
+        }
+
+        // Preserve the existing graph and memory, just activate meeting state
+        setMeetingState("active");
+
+        // Disable listening just in case
+        setIsListening(false);
+
+        const firstTurn = script[0];
+        setSimulation({
+            isActive: true,
+            step: 0,
+            speaker: firstTurn.speaker,
+            text: "",
+            fullText: firstTurn.text,
+            typeIndex: 0,
+        });
+    }, [projectId, setMeetingState, setIsListening, refreshProjectCollaborationMeta]);
+
+    const handleToggleMeetingState = useCallback(async () => {
+        if (IS_SEEDED_PROJECT) {
+            const isCompleted = localStorage.getItem(`simulation-completed-${projectId}`) === "true";
+            if (!isCompleted) {
+                await handleStartSimulation();
+                return;
+            } else {
+                alert("현재 Nodi에 팀원이 같이 있지 않습니다. 보이스를 통해 아이디어를 말씀해주시면 추가 노드를 생성해드릴게요.");
+                return;
+            }
+        }
+        setMeetingState((prev) => (prev === "active" ? "ended" : "active"));
+    }, [IS_SEEDED_PROJECT, projectId, handleStartSimulation]);
+
     const recognitionRef = useRef(null);
     const silenceTimeoutRef = useRef(null);
     const transcriptBufferRef = useRef("");
@@ -1203,8 +1415,14 @@ export default function ThinkingMachine({
                             interimTranscript={interimTranscript}
                             meetingSeconds={meetingSeconds}
                             meetingState={meetingState}
-                            onToggleMeetingState={() => setMeetingState(meetingState === "active" ? "ended" : "active")}
+                            onToggleMeetingState={handleToggleMeetingState}
                             currentDirection={meetingMemory?.executive?.currentDirection || ""}
+                            isSimulationActive={simulation.isActive}
+                            simulationSpeaker={simulation.speaker}
+                            simulationText={simulation.text}
+                            isSeededProject={IS_SEEDED_PROJECT}
+                            isSimulationCompleted={isSimulationCompleted}
+                            onStartSimulation={handleStartSimulation}
                             onDismissSuggestion={(id) => {
                                 setDismissedSuggestionIds((prev) => {
                                     const next = new Set(prev);

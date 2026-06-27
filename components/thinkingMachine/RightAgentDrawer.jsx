@@ -76,6 +76,12 @@ export default function RightAgentDrawer({
   onMergeNodes,
   onLinkNodes,
   onClose,
+  isSimulationActive = false,
+  simulationSpeaker = "",
+  simulationText = "",
+  isSeededProject = false,
+  isSimulationCompleted = false,
+  onStartSimulation,
 }) {
   const { mode: thinkingMode, flow: thinkingFlow } = parseStage(stage);
   const recommendations = getAiRecommendations(nodes, edges);
@@ -371,7 +377,8 @@ export default function RightAgentDrawer({
                 {/* Mic Button (Frame 1410167861) */}
                 <button
                   type="button"
-                  onClick={onToggleListening}
+                  onClick={isSimulationActive ? undefined : onToggleListening}
+                  disabled={isSimulationActive}
                   className="relative flex items-center justify-center transition active:scale-95 hover:bg-white/80 shrink-0"
                   style={{
                     width: "33px",
@@ -380,8 +387,10 @@ export default function RightAgentDrawer({
                     boxShadow: "2.37604px 2.37604px 4.75208px 0.475208px rgba(0, 0, 0, 0.05)",
                     borderRadius: "16.5px",
                     border: isListening ? "1px solid rgba(164, 220, 205, 0.8)" : "none",
+                    opacity: isSimulationActive ? 0.4 : 1,
+                    cursor: isSimulationActive ? "not-allowed" : "pointer",
                   }}
-                  title={isListening ? "음성 인식 중지" : "음성 인식 시작"}
+                  title={isSimulationActive ? "시뮬레이션 중에는 마이크가 비활성화됩니다" : (isListening ? "음성 인식 중지" : "음성 인식 시작")}
                 >
                   {isListening ? (
                     <>
@@ -396,7 +405,8 @@ export default function RightAgentDrawer({
                 {/* Pause Button (Frame 1410167860) */}
                 <button
                   type="button"
-                  onClick={onToggleMeetingState}
+                  onClick={isSimulationActive ? undefined : onToggleMeetingState}
+                  disabled={isSimulationActive}
                   className="flex items-center justify-center transition active:scale-95 hover:bg-white/80 shrink-0"
                   style={{
                     width: "33px",
@@ -404,8 +414,10 @@ export default function RightAgentDrawer({
                     background: "rgba(255, 255, 255, 0.69)",
                     boxShadow: "2.37604px 2.37604px 4.75208px 0.475208px rgba(0, 0, 0, 0.05)",
                     borderRadius: "16.5px",
+                    opacity: isSimulationActive ? 0.4 : 1,
+                    cursor: isSimulationActive ? "not-allowed" : "pointer",
                   }}
-                  title={meetingState === "active" ? "회의 일시정지" : "회의 재개"}
+                  title={isSimulationActive ? "시뮬레이션 중에는 회의 조율이 불가합니다" : (meetingState === "active" ? "회의 일시정지" : "회의 재개")}
                 >
                   {meetingState === "active" ? (
                     <Pause className="h-[15.45px] w-[18.4px] text-[#324158]" strokeWidth={2} fill="#324158" />
@@ -416,8 +428,20 @@ export default function RightAgentDrawer({
               </div>
             </div>
 
-            {/* Live STT Transcript Bubble if listening */}
-            {isSttActive && (
+            {/* Live STT Transcript or Simulation speech bubble */}
+            {isSimulationActive ? (
+              <div
+                className="w-full rounded-[14px] bg-sky-50 border border-sky-200 px-3 py-2 flex flex-col gap-1 shrink-0 shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-sky-600">[{simulationSpeaker}] 발화 및 기록 중...</span>
+                </div>
+                <p className="text-[10px] leading-relaxed text-slate-800 font-medium max-h-[50px] overflow-y-auto">
+                  {simulationText}
+                </p>
+              </div>
+            ) : isSttActive ? (
               <div
                 className="w-full rounded-[14px] bg-white/40 border border-[#CDE9E9] px-3 py-2 flex flex-col gap-1 shrink-0"
                 style={{
@@ -432,18 +456,49 @@ export default function RightAgentDrawer({
                   {sttTranscript} <span className="text-emerald-600/80">{interimTranscript}</span>
                 </p>
               </div>
-            )}
+            ) : null}
 
             {/* Row 2: Timeline Scroll List (Frame 1410167878 & Frame 1410167877) */}
             <div
               className="flex flex-col overflow-y-auto overflow-x-hidden pr-1 pb-24 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-white/40 [&::-webkit-scrollbar-track]:rounded-[17px] [&::-webkit-scrollbar-thumb]:bg-[#A4DCCD] [&::-webkit-scrollbar-thumb]:rounded-[17px]"
               style={{
                 width: "264px",
-                height: isSttActive ? "290px" : "364px",
+                height: isSimulationActive ? "230px" : isSttActive ? "290px" : "364px",
                 gap: "10px",
                 scrollbarWidth: "thin",
               }}
             >
+              {/* Simulation Start / Retry Banner Card */}
+              {isSeededProject && !isSimulationActive && !isSimulationCompleted && (
+                <div
+                  className="w-full rounded-[14px] bg-gradient-to-r from-teal-400/20 to-sky-400/20 border border-teal-200 p-3 flex flex-col gap-2 shrink-0 mb-1"
+                  style={{
+                    boxShadow: "0px 4px 12px rgba(114, 114, 114, 0.08)",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+                    <span className="text-[10px] font-bold text-teal-700">회의 상황 시뮬레이션</span>
+                  </div>
+                  <p className="text-[9.5px] text-slate-600 leading-normal">
+                    우측 상단의 <b>플레이(▶)</b> 버튼을 누르면, 가상 팀원들이 회의를 진행하며 실시간으로 캔버스 노드를 구성하는 과정이 시작됩니다!
+                  </p>
+                </div>
+              )}
+
+              {isSeededProject && isSimulationCompleted && !isSimulationActive && (
+                <div
+                  className="w-full rounded-[14px] bg-slate-50 border border-slate-200 p-3 flex flex-col gap-1.5 shrink-0 mb-1"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="text-[10px] font-bold text-slate-600">시뮬레이션 완료됨</span>
+                  </div>
+                  <p className="text-[9.5px] text-slate-600 leading-normal">
+                    현재 Nodi에 다른 팀원이 같이 있지 않습니다. 마이크 보이스를 통해 나만의 아이디어를 추가하여 <b>보라색 노드</b>를 만들어 보세요!
+                  </p>
+                </div>
+              )}
               {timelineItems.length === 0 ? (
                 <div
                   className="flex flex-col items-center justify-center border border-dashed border-[#CDE9E9] bg-white/10 p-6 text-center"

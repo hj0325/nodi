@@ -35,7 +35,7 @@ export function useMeetingCaptureFlow({
   recordProjectActivity,
   meetingState = "active",
 }) {
-  const applyMeetingGraphPatch = useCallback((graphPatch = {}, captureMeetingState = meetingState) => {
+  const applyMeetingGraphPatch = useCallback((graphPatch = {}, captureMeetingState = meetingState, speakerName = null) => {
     const incomingNodes = Array.isArray(graphPatch?.nodes) ? graphPatch.nodes : [];
     const incomingEdges = Array.isArray(graphPatch?.edges) ? graphPatch.edges : [];
     if (!incomingNodes.length && !incomingEdges.length) {
@@ -51,7 +51,7 @@ export function useMeetingCaptureFlow({
       data: {
         ...node.data,
         ownerId: node?.data?.ownerId || currentUserId,
-        editedBy: currentUserName,
+        editedBy: speakerName || node?.data?.editedBy || currentUserName,
         visibility: normalizeVisibility(node?.data?.visibility),
       },
     }));
@@ -91,7 +91,7 @@ export function useMeetingCaptureFlow({
     };
   }, [currentUserId, currentUserName, edges, meetingState, nodes, setEdges, setNodes]);
 
-  const handleMeetingCaptureSubmit = useCallback(async (chunkText) => {
+  const handleMeetingCaptureSubmit = useCallback(async (chunkText, overrideSpeakerName = null) => {
     if (!projectId) return;
 
     const trimmedChunk = String(chunkText || "").trim();
@@ -117,7 +117,7 @@ export function useMeetingCaptureFlow({
         projectTitle,
         chunkText: trimmedChunk,
         chunkType: "speaker_turn",
-        speakerName: currentUserName,
+        speakerName: overrideSpeakerName || currentUserName,
         meetingSessionId: meetingSessionIdRef.current,
         existing_nodes: existingThinkingNodes,
         meeting_memory: {
@@ -137,7 +137,7 @@ export function useMeetingCaptureFlow({
         meetingState,
       });
 
-      const mergeResult = applyMeetingGraphPatch(result?.graphPatch || {}, meetingState);
+      const mergeResult = applyMeetingGraphPatch(result?.graphPatch || {}, meetingState, overrideSpeakerName || currentUserName);
       const nextMeetingMemory = mergeMeetingMemory(meetingMemory, result?.memoryPatch || {});
       setMeetingMemory(nextMeetingMemory);
       setMeetingCaptureSummary(result?.meetingSummary || null);
