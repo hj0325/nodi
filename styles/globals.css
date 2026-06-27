@@ -289,4 +289,45 @@ h6,
   stroke-dashoffset: 0;
 }
 
+.tm-edge-morph-solid {
+  animation: tm-edge-solid-out 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tm-edge-morph-dashed {
+  opacity: 0;
+  animation: tm-edge-dashed-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tm-edge-morph-dashed path {
+  stroke-dashoffset: 12;
+  animation: tm-edge-dash-offset-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tm-edge-solid-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes tm-edge-dashed-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tm-edge-dash-offset-in {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 

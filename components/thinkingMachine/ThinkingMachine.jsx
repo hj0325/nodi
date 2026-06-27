@@ -36,6 +36,7 @@ import {
 } from "@/lib/thinkingMachine/meetingMemory";
 import { readCurrentUser } from "@/lib/thinkingMachine/clientUser";
 import {
+    getParticipantMeta,
     resolveTeamMember,
 } from "@/lib/thinkingMachine/participantMeta";
 import { buildReasoningAlignmentAnalysis } from "@/lib/thinkingMachine/reasoningAlignment";
@@ -2093,6 +2094,20 @@ export default function ThinkingMachine({
         return () => clearTimeout(timer);
     }, [simulation.isActive, simulation.fullText, simulation.typeIndex, simulation.step, handleSimulationSubmitCurrentStep]);
 
+    const simulationActiveSpeakerId = useMemo(() => {
+        if (!simulation.isActive || !simulation.speaker) return null;
+        const resolved = resolveTeamMember(teamMembers, { name: simulation.speaker });
+        if (resolved?.id) return resolved.id;
+        return getParticipantMeta(simulation.speaker).id || null;
+    }, [simulation.isActive, simulation.speaker, teamMembers]);
+
+    const participantsBarActiveSpeakerId = simulationActiveSpeakerId || activeSpeakerId;
+    const participantsBarIsSpeaking = Boolean(simulationActiveSpeakerId)
+        || (isActiveSpeakerTalking && hasSpeechActivity);
+    const participantsBarHasSpeechActivity = simulation.isActive && simulation.speaker
+        ? simulation.typeIndex < simulation.fullText.length
+        : hasSpeechActivity;
+
     const handleStartSimulation = useCallback(async () => {
         const isCompleted = localStorage.getItem(`simulation-completed-${projectId}`) === "true";
         if (isCompleted) {
@@ -2465,9 +2480,9 @@ export default function ThinkingMachine({
                 projectMetaHref={projectMetaHref}
                 projectMetaLabel="Project workspace"
                 teamMembers={teamMembers}
-                activeSpeakerId={activeSpeakerId}
-                isSpeaking={isActiveSpeakerTalking}
-                hasSpeechActivity={hasSpeechActivity}
+                activeSpeakerId={participantsBarActiveSpeakerId}
+                isSpeaking={participantsBarIsSpeaking}
+                hasSpeechActivity={participantsBarHasSpeechActivity}
                 isSimulationCompleted={isSimulationCompleted}
             />
 

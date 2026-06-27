@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getTypeMeta } from "@/lib/thinkingMachine/nodeMeta";
 import { getAlignmentVisualMeta } from "@/lib/thinkingMachine/reasoningAlignment";
 import { GRAPH_ENTRANCE_EDGE_DELAY_MS } from "@/lib/thinkingMachine/connectorEdges";
+
+const DASH_MORPH_MS = 420;
 
 const DEFAULT_LINE_COLOR = "#AAF17B";
 const DEFAULT_LINE_WIDTH = 1.65;
@@ -385,25 +387,63 @@ export default function ConnectorEdge({
   const isHydratedEdge = Boolean(data?.isHydratedEdge);
   const graphEntranceAnimating = Boolean(data?.graphEntranceAnimating);
   const [hasCompletedEntrance, setHasCompletedEntrance] = useState(false);
+  const [dashMorphActive, setDashMorphActive] = useState(false);
   const hideForEntrance =
     isHydratedEdge && graphEntranceAnimating && GRAPH_ENTRANCE_EDGE_DELAY_MS > 0;
   const shouldAnimateDrawEntrance = isHydratedEdge
     ? graphEntranceAnimating
     : !hasCompletedEntrance;
+  const prevDrawingRef = useRef(shouldAnimateDrawEntrance);
+
+  useEffect(() => {
+    const wasDrawing = prevDrawingRef.current;
+    prevDrawingRef.current = shouldAnimateDrawEntrance;
+
+    if (shouldAnimateDrawEntrance) {
+      setDashMorphActive(false);
+      return undefined;
+    }
+    if (!isDashedEdge || !wasDrawing) return undefined;
+
+    setDashMorphActive(true);
+    const timer = window.setTimeout(() => setDashMorphActive(false), DASH_MORPH_MS);
+    return () => window.clearTimeout(timer);
+  }, [shouldAnimateDrawEntrance, isDashedEdge]);
+
+  const isDrawing = shouldAnimateDrawEntrance;
+  const isDashMorphing = isDashedEdge && dashMorphActive;
+  const isDashedFinal = isDashedEdge && !isDrawing && !isDashMorphing;
 
   let edgePathClassName = "react-flow__edge-path";
-  if (shouldAnimateDrawEntrance) {
+  if (isDrawing) {
     edgePathClassName += " animate-draw-edge";
-  } else if (isDashedEdge) {
+  } else if (isDashedFinal) {
     edgePathClassName += " tm-dashed-edge";
   }
 
-  const edgePathProps = shouldAnimateDrawEntrance ? { pathLength: "1" } : {};
+  const edgePathProps = isDrawing ? { pathLength: "1" } : {};
   const entrancePathAnimationStyle = hideForEntrance
     ? { animationDelay: `${GRAPH_ENTRANCE_EDGE_DELAY_MS}ms` }
     : null;
-  const dashedStrokeStyle =
-    isDashedEdge && !shouldAnimateDrawEntrance ? { strokeDasharray: lineDash } : {};
+  const dashedStrokeStyle = isDashedFinal ? { strokeDasharray: lineDash } : {};
+  const underlayBaseStyle = {
+    stroke: underlayStroke,
+    strokeWidth: primaryWidth + 2.2,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    opacity: isSelected ? 0.95 : 0.82,
+    filter: "none",
+  };
+  const primaryBaseStyle = {
+    stroke: primaryStroke,
+    strokeWidth: primaryWidth,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    opacity: isSelected ? 1 : 0.92,
+    filter: isSelected
+      ? "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.10))"
+      : "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.08))",
+  };
 
   return (
     <g
@@ -427,44 +467,58 @@ export default function ConnectorEdge({
           <stop offset="100%" stopColor={endColor} />
         </linearGradient>
       </defs>
-      <path
-        d={path}
-        {...edgePathProps}
-        className={edgePathClassName}
-        fill="none"
-        style={{
-          stroke: underlayStroke,
-          strokeWidth: primaryWidth + 2.2,
-          strokeLinecap: "round",
-          strokeLinejoin: "round",
-          opacity: isSelected ? 0.95 : 0.82,
-          filter: "none",
-          ...dashedStrokeStyle,
-          ...entrancePathAnimationStyle,
-        }}
-      />
-      <path
-        id={id}
-        d={path}
-        {...edgePathProps}
-        className={edgePathClassName}
-        fill="none"
-        onAnimationEnd={
-          !isHydratedEdge && !hasCompletedEntrance ? () => setHasCompletedEntrance(true) : undefined
-        }
-        style={{
-          stroke: primaryStroke,
-          strokeWidth: primaryWidth,
-          strokeLinecap: "round",
-          strokeLinejoin: "round",
-          opacity: isSelected ? 1 : 0.92,
-          filter: isSelected
-            ? "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.10))"
-            : "drop-shadow(0 1px 1px rgba(15, 23, 42, 0.08))",
-          ...dashedStrokeStyle,
-          ...entrancePathAnimationStyle,
-        }}
-      />
+      {isDashMorphing ? (
+        <>
+          <g className="tm-edge-morph-solid">
+            <path d={path} className="react-flow__edge-path" fill="none" style={underlayBaseStyle} />
+            <path d={path} className="react-flow__edge-path" fill="none" style={primaryBaseStyle} />
+          </g>
+          <g className="tm-edge-morph-dashed">
+            <path
+              d={path}
+              className="react-flow__edge-path tm-dashed-edge"
+              fill="none"
+              style={{ ...underlayBaseStyle, strokeDasharray: lineDash }}
+            />
+            <path
+              id={id}
+              d={path}
+              className="react-flow__edge-path tm-dashed-edge"
+              fill="none"
+              style={{ ...primaryBaseStyle, strokeDasharray: lineDash }}
+            />
+          </g>
+        </>
+      ) : (
+        <>
+          <path
+            d={path}
+            {...edgePathProps}
+            className={edgePathClassName}
+            fill="none"
+            style={{
+              ...underlayBaseStyle,
+              ...dashedStrokeStyle,
+              ...entrancePathAnimationStyle,
+            }}
+          />
+          <path
+            id={id}
+            d={path}
+            {...edgePathProps}
+            className={edgePathClassName}
+            fill="none"
+            onAnimationEnd={
+              !isHydratedEdge && !hasCompletedEntrance ? () => setHasCompletedEntrance(true) : undefined
+            }
+            style={{
+              ...primaryBaseStyle,
+              ...dashedStrokeStyle,
+              ...entrancePathAnimationStyle,
+            }}
+          />
+        </>
+      )}
 
       {label || alignmentLabel ? (
         <foreignObject

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import {
   getDefaultTeamMembers,
@@ -9,14 +9,14 @@ import {
   sortParticipants,
 } from "@/lib/thinkingMachine/participantMeta";
 
-const AVATAR_SPRING = { type: "spring", stiffness: 420, damping: 32, mass: 0.7 };
+const AVATAR_FADE = { duration: 0.22, ease: "easeInOut" };
 const PILL_SPRING = { type: "spring", stiffness: 360, damping: 30, mass: 0.8 };
 const SPEAKER_PILL_WIDTH = 56;
 const ROSTER_GAP = 5;
 const ROSTER_WIDTH_COMPACT = 111;
 const ROSTER_WIDTH_FULL = 134;
 
-function VoiceIndicator({ intense = false }) {
+function VoiceIndicator({ intense = false, left = "31px" }) {
   const bars = [
     { height: 6, delay: 0 },
     { height: 10, delay: 0.12 },
@@ -29,7 +29,7 @@ function VoiceIndicator({ intense = false }) {
       style={{
         width: "16px",
         height: "16px",
-        left: "31px",
+        left,
         top: "3px",
         background: "#EBFFA3",
         borderRadius: "9px",
@@ -64,21 +64,25 @@ function VoiceIndicator({ intense = false }) {
   );
 }
 
-function ParticipantAvatar({ member, active = false, className = "", style = {} }) {
+function ParticipantAvatar({ member, showGlow = false, className = "", style = {} }) {
   const meta = getParticipantMeta(member);
 
   return (
     <motion.div
-      layoutId={`participant-${meta.id || meta.initial}`}
-      layout
-      transition={AVATAR_SPRING}
       className={`flex items-center justify-center text-white ${className}`}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        boxShadow: showGlow ? "0px 0px 17.8px rgba(194, 255, 169, 0.8)" : "0px 0px 0px rgba(194, 255, 169, 0)",
+      }}
+      exit={{ opacity: 0, scale: 0.92 }}
+      transition={AVATAR_FADE}
       style={{
         width: "26px",
         height: "26px",
         background: meta.bg,
         borderRadius: "15.5px",
-        boxShadow: active ? "0px 0px 17.8px rgba(194, 255, 169, 0.8)" : undefined,
         ...style,
       }}
       title={meta.name}
@@ -111,6 +115,8 @@ export default function MeetingParticipantsBar({
     );
   }, [teamMembers, isSimulationCompleted]);
 
+  const isSoloParticipant = members.length <= 1;
+
   const activeMember = useMemo(() => {
     if (!isSpeaking || !activeSpeakerId) return null;
     return (
@@ -119,20 +125,22 @@ export default function MeetingParticipantsBar({
     );
   }, [activeSpeakerId, isSpeaking, members]);
 
+  const showSpeakerSplit = isSpeaking && activeMember && !isSoloParticipant;
+
   const rosterMembers = useMemo(() => {
-    if (isSpeaking && activeMember?.id) {
+    if (showSpeakerSplit && activeMember?.id) {
       return members.filter((member) => member.id !== activeMember.id);
     }
     return members;
-  }, [activeMember, isSpeaking, members]);
+  }, [activeMember, showSpeakerSplit, members]);
 
   const rosterWidth = useMemo(() => {
-    if (isSpeaking) return ROSTER_WIDTH_COMPACT;
+    if (showSpeakerSplit) return ROSTER_WIDTH_COMPACT;
     if (rosterMembers.length <= 1) return 64;
     return ROSTER_WIDTH_FULL;
-  }, [isSpeaking, rosterMembers.length]);
+  }, [showSpeakerSplit, rosterMembers.length]);
 
-  const totalWidth = isSpeaking
+  const totalWidth = showSpeakerSplit
     ? SPEAKER_PILL_WIDTH + ROSTER_GAP + rosterWidth
     : rosterWidth;
 
@@ -143,59 +151,67 @@ export default function MeetingParticipantsBar({
   }, [rosterMembers.length]);
 
   return (
-    <LayoutGroup id="meeting-participants">
-      <motion.div
-        className="pointer-events-auto flex flex-row items-center"
-        animate={{ width: totalWidth }}
-        transition={PILL_SPRING}
-        style={{ height: "36px", gap: `${ROSTER_GAP}px` }}
-      >
-        <AnimatePresence mode="popLayout">
-          {isSpeaking && activeMember ? (
-            <motion.div
-              key="active-speaker-pill"
-              className="relative shrink-0 overflow-visible"
-              initial={{ opacity: 0, width: 0, scale: 0.92 }}
-              animate={{ opacity: 1, width: SPEAKER_PILL_WIDTH, scale: 1 }}
-              exit={{ opacity: 0, width: 0, scale: 0.92 }}
-              transition={PILL_SPRING}
-              style={{
-                boxSizing: "border-box",
-                height: "36px",
-                background: "rgba(255, 255, 255, 0.64)",
-                border: "1px solid #FFFFFF",
-                boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
-                borderRadius: "35px",
-                padding: "3px 9px",
-              }}
-            >
+    <motion.div
+      className="pointer-events-auto flex flex-row items-center"
+      animate={{ width: totalWidth }}
+      transition={PILL_SPRING}
+      style={{ height: "36px", gap: `${ROSTER_GAP}px` }}
+    >
+      <AnimatePresence mode="popLayout">
+        {showSpeakerSplit && activeMember ? (
+          <motion.div
+            key="active-speaker-pill"
+            className="relative shrink-0 overflow-visible"
+            initial={{ opacity: 0, width: SPEAKER_PILL_WIDTH, scale: 0.96 }}
+            animate={{ opacity: 1, width: SPEAKER_PILL_WIDTH, scale: 1 }}
+            exit={{ opacity: 0, width: SPEAKER_PILL_WIDTH, scale: 0.96 }}
+            transition={AVATAR_FADE}
+            style={{
+              boxSizing: "border-box",
+              height: "36px",
+              background: "rgba(255, 255, 255, 0.64)",
+              border: "1px solid #FFFFFF",
+              boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
+              borderRadius: "35px",
+              padding: "3px 9px",
+            }}
+          >
+            <AnimatePresence mode="wait">
               <ParticipantAvatar
+                key={activeMember.id || activeMember.initial}
                 member={activeMember}
-                active
+                showGlow={hasSpeechActivity}
                 style={{ position: "absolute", left: "9px", top: "4px" }}
               />
-              <VoiceIndicator intense={hasSpeechActivity} />
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+            </AnimatePresence>
+            <AnimatePresence>
+              {hasSpeechActivity ? (
+                <VoiceIndicator key="voice-indicator" intense={hasSpeechActivity} />
+              ) : null}
+            </AnimatePresence>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
-        <motion.div
-          className="relative shrink-0"
-          animate={{ width: rosterWidth }}
-          transition={PILL_SPRING}
-          style={{
-            boxSizing: "border-box",
-            height: "36px",
-            background: "rgba(255, 255, 255, 0.64)",
-            border: "1px solid #FFFFFF",
-            boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
-            borderRadius: "35px",
-          }}
-        >
+      <motion.div
+        className="relative shrink-0"
+        animate={{ width: rosterWidth }}
+        transition={PILL_SPRING}
+        style={{
+          boxSizing: "border-box",
+          height: "36px",
+          background: "rgba(255, 255, 255, 0.64)",
+          border: "1px solid #FFFFFF",
+          boxShadow: "3px 3px 6px rgba(0, 0, 0, 0.05)",
+          borderRadius: "35px",
+        }}
+      >
+        <AnimatePresence mode="popLayout">
           {rosterMembers.map((member, index) => (
             <ParticipantAvatar
               key={member.id || member.initial}
               member={member}
+              showGlow={isSoloParticipant && isSpeaking && member.id === activeMember?.id && hasSpeechActivity}
               style={{
                 position: "absolute",
                 left: `${7 + index * 22}px`,
@@ -204,15 +220,21 @@ export default function MeetingParticipantsBar({
               }}
             />
           ))}
+        </AnimatePresence>
 
-          <div
-            className="absolute flex items-center justify-center"
-            style={{ width: "20px", height: "20px", left: `${chevronLeft}px`, top: "7px" }}
-          >
-            <ChevronDown className="h-3.5 w-3.5 text-[#C5C5C5]" />
-          </div>
-        </motion.div>
+        <AnimatePresence>
+          {isSoloParticipant && isSpeaking && activeMember && hasSpeechActivity ? (
+            <VoiceIndicator key="solo-voice-indicator" intense={hasSpeechActivity} left="29px" />
+          ) : null}
+        </AnimatePresence>
+
+        <div
+          className="absolute flex items-center justify-center"
+          style={{ width: "20px", height: "20px", left: `${chevronLeft}px`, top: "7px" }}
+        >
+          <ChevronDown className="h-3.5 w-3.5 text-[#C5C5C5]" />
+        </div>
       </motion.div>
-    </LayoutGroup>
+    </motion.div>
   );
 }
