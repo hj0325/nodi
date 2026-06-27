@@ -2524,6 +2524,7 @@ export default function ThinkingMachine({
                             onToggleMeetingState={handleToggleMeetingState}
                             currentDirection={meetingMemory?.executive?.currentDirection || ""}
                             isSimulationActive={simulation.isActive}
+                            simulationStep={simulation.step}
                             simulationSpeaker={simulation.speaker}
                             simulationText={simulation.text}
                             isSeededProject={IS_SEEDED_PROJECT}

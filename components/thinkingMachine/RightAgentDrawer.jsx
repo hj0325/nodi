@@ -77,6 +77,7 @@ export default function RightAgentDrawer({
   onLinkNodes,
   onClose,
   isSimulationActive = false,
+  simulationStep = 0,
   simulationSpeaker = "",
   simulationText = "",
   isSeededProject = false,
@@ -501,24 +502,64 @@ export default function RightAgentDrawer({
 
             {/* Simulation speech or unified post-meeting flow banner */}
             {isSimulationActive ? (
-              <motion.div
-                layout
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-                className="w-full shrink-0 overflow-hidden rounded-[14px] border border-sky-200 bg-sky-50 px-3 py-2 shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500" />
-                  <span className="text-[10px] font-bold text-sky-600">
-                    [{simulationSpeaker}] 발화 및 기록 중...
-                  </span>
-                </div>
-                <p className="max-h-[50px] overflow-y-auto text-[10px] font-medium leading-relaxed text-slate-800">
-                  {simulationText}
-                </p>
-              </motion.div>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={`sim-utterance-${simulationStep}`}
+                  initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                  className="relative flex w-full shrink-0 flex-col items-start self-start"
+                  style={{
+                    width: "261px",
+                    minHeight: "75px",
+                    padding: "13px 19px",
+                    gap: "10px",
+                    borderRadius: "21px",
+                    isolation: "isolate",
+                    background: "rgba(255, 255, 255, 0.22)",
+                    boxShadow:
+                      "inset 0px 4px 10.9px #FFFFFF, inset 0px -6px 9.6px rgba(255, 255, 255, 0.61)",
+                    backdropFilter: "blur(1.6px)",
+                    WebkitBackdropFilter: "blur(1.6px)",
+                    filter: "drop-shadow(0px 4px 26.5px rgba(132, 132, 132, 0.19))",
+                  }}
+                >
+                  <div
+                    className="flex flex-col items-start"
+                    style={{ width: "212px", gap: "2px" }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "'Pretendard Variable', sans-serif",
+                        fontStyle: "normal",
+                        fontWeight: 400,
+                        fontSize: "9px",
+                        lineHeight: "15px",
+                        color: "#8B979B",
+                      }}
+                    >
+                      {simulationSpeaker}
+                    </span>
+                    <p
+                      style={{
+                        width: "212px",
+                        margin: 0,
+                        fontFamily: "'Pretendard Variable', sans-serif",
+                        fontStyle: "normal",
+                        fontWeight: 400,
+                        fontSize: "11px",
+                        lineHeight: "15px",
+                        color: "#444859",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "keep-all",
+                      }}
+                    >
+                      {simulationText}
+                    </p>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             ) : showMeetingFlowBanner ? (
               <motion.div
                 layout
@@ -664,32 +705,13 @@ export default function RightAgentDrawer({
 
             {/* Row 2: Timeline Scroll List (Frame 1410167878 & Frame 1410167877) */}
             <div
-              className="flex flex-col overflow-y-auto overflow-x-hidden pr-1 pb-24 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-white/40 [&::-webkit-scrollbar-track]:rounded-[17px] [&::-webkit-scrollbar-thumb]:bg-[#A4DCCD] [&::-webkit-scrollbar-thumb]:rounded-[17px]"
+              className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pr-1 pb-24 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-white/40 [&::-webkit-scrollbar-track]:rounded-[17px] [&::-webkit-scrollbar-thumb]:bg-[#A4DCCD] [&::-webkit-scrollbar-thumb]:rounded-[17px]"
               style={{
                 width: "264px",
-                height: isSimulationActive ? "230px" : showMeetingFlowBanner ? "279px" : "364px",
                 gap: "10px",
                 scrollbarWidth: "thin",
               }}
             >
-              {/* Simulation Start / Retry Banner Card */}
-              {isSeededProject && !isSimulationActive && !isSimulationCompleted && (
-                <div
-                  className="w-full rounded-[14px] bg-gradient-to-r from-teal-400/20 to-sky-400/20 border border-teal-200 p-3 flex flex-col gap-2 shrink-0 mb-1"
-                  style={{
-                    boxShadow: "0px 4px 12px rgba(114, 114, 114, 0.08)",
-                  }}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-teal-600" />
-                    <span className="text-[10px] font-bold text-teal-700">회의 상황 시뮬레이션</span>
-                  </div>
-                  <p className="text-[9.5px] text-slate-600 leading-normal">
-                    우측 상단의 <b>플레이(▶)</b> 버튼을 누르면, 가상 팀원들이 회의를 진행하며 실시간으로 캔버스 노드를 구성하는 과정이 시작됩니다!
-                  </p>
-                </div>
-              )}
-
               {timelineItems.length === 0 ? (
                 <div
                   className="flex flex-col items-center justify-center border border-dashed border-[#CDE9E9] bg-white/10 p-6 text-center"
