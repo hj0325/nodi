@@ -402,12 +402,41 @@ export default function RightAgentDrawer({
                   )}
                 </button>
 
+                {/* Add glowing style block if in initial state */}
+                {isSeededProject && !isSimulationActive && !isSimulationCompleted && meetingState === "ended" && (
+                  <style dangerouslySetInnerHTML={{__html: `
+                    @keyframes tm-glow-play {
+                      0% {
+                        box-shadow: 0 0 0 0 rgba(98, 184, 170, 0.4);
+                        transform: scale(1);
+                      }
+                      50% {
+                        box-shadow: 0 0 15px 6px rgba(98, 184, 170, 0.8), 0 0 2px 2px rgba(98, 184, 170, 0.4);
+                        transform: scale(1.08);
+                      }
+                      100% {
+                        box-shadow: 0 0 0 0 rgba(98, 184, 170, 0);
+                        transform: scale(1);
+                      }
+                    }
+                    .tm-play-glowing {
+                      animation: tm-glow-play 2s infinite ease-in-out !important;
+                      background: rgb(209, 250, 229) !important; /* light emerald/teal */
+                      border: 1.5px solid rgb(52, 211, 153) !important;
+                    }
+                  `}} />
+                )}
+
                 {/* Pause Button (Frame 1410167860) */}
                 <button
                   type="button"
                   onClick={isSimulationActive ? undefined : onToggleMeetingState}
                   disabled={isSimulationActive}
-                  className="flex items-center justify-center transition active:scale-95 hover:bg-white/80 shrink-0"
+                  className={`flex items-center justify-center transition active:scale-95 hover:bg-white/80 shrink-0 ${
+                    isSeededProject && !isSimulationActive && !isSimulationCompleted && meetingState === "ended"
+                      ? "tm-play-glowing"
+                      : ""
+                  }`}
                   style={{
                     width: "33px",
                     height: "33px",
@@ -495,7 +524,7 @@ export default function RightAgentDrawer({
                     <span className="text-[10px] font-bold text-slate-600">시뮬레이션 완료됨</span>
                   </div>
                   <p className="text-[9.5px] text-slate-600 leading-normal">
-                    현재 Nodi에 다른 팀원이 같이 있지 않습니다. 마이크 보이스를 통해 나만의 아이디어를 추가하여 <b>보라색 노드</b>를 만들어 보세요!
+                    현재 Nodi에 다른 팀원이 함께 있지 않습니다. 보이스를 통해 아이디어를 공유해주세요!
                   </p>
                 </div>
               )}

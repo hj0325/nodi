@@ -53,6 +53,7 @@ export function useMeetingCaptureFlow({
         ownerId: node?.data?.ownerId || currentUserId,
         editedBy: speakerName || node?.data?.editedBy || currentUserName,
         visibility: normalizeVisibility(node?.data?.visibility),
+        isOffMeeting: node?.data?.isOffMeeting || captureMeetingState === "ended" || graphPatch?.placementMode === "below",
       },
     }));
     const rawNewNodes = normalizedIncoming.map((node) => toReactFlowNode(node, null));
