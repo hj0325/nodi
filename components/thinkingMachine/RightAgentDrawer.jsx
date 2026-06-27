@@ -228,9 +228,9 @@ export default function RightAgentDrawer({
 
   const meetingFlowBannerStatus = useMemo(() => {
     if (isMeetingCaptureLoading) return "generating";
-    if (isListening && (sttTranscript || interimTranscript || pinnedSttText)) return "stt";
+    if (isListening) return "stt";
     return "idle";
-  }, [isMeetingCaptureLoading, isListening, sttTranscript, interimTranscript, pinnedSttText]);
+  }, [isMeetingCaptureLoading, isListening]);
 
   const meetingFlowBannerStyle = useMemo(() => {
     if (meetingFlowBannerStatus === "generating") {
