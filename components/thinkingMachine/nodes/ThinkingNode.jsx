@@ -36,7 +36,7 @@ const VERTICAL_HANDLE_STYLE_TOP = {
   opacity: 0,
   pointerEvents: "none",
   position: "absolute",
-  top: "30.76px",
+  top: `${NODE_PORT_LAYOUT.toggleHeight + NODE_PORT_LAYOUT.headerGap}px`,
   left: "50%",
   transform: "translate(-50%, -50%)",
 };
@@ -49,7 +49,7 @@ const VERTICAL_HANDLE_STYLE_BOTTOM = {
   opacity: 0,
   pointerEvents: "none",
   position: "absolute",
-  bottom: 0,
+  bottom: `-${NODE_PORT_LAYOUT.portRingOffset}px`,
   left: "50%",
   transform: "translate(-50%, 50%)",
 };
@@ -271,24 +271,20 @@ export default function ThinkingNode({ id, data = {} }) {
   return (
     <div className="relative h-full w-full">
       {/* Invisible stable Handles for React Flow (Must not be scaled/animated) */}
-      {hasTopPort ? (
-        <Handle
-          id="top-target"
-          type="target"
-          position={Position.Top}
-          style={VERTICAL_HANDLE_STYLE_TOP}
-          isConnectable={false}
-        />
-      ) : null}
-      {hasBottomPort ? (
-        <Handle
-          id="bottom-source"
-          type="source"
-          position={Position.Bottom}
-          style={VERTICAL_HANDLE_STYLE_BOTTOM}
-          isConnectable={false}
-        />
-      ) : null}
+      <Handle
+        id="top-target"
+        type="target"
+        position={Position.Top}
+        style={VERTICAL_HANDLE_STYLE_TOP}
+        isConnectable={false}
+      />
+      <Handle
+        id="bottom-source"
+        type="source"
+        position={Position.Bottom}
+        style={VERTICAL_HANDLE_STYLE_BOTTOM}
+        isConnectable={false}
+      />
       <Handle
         id="right-source"
         type="source"

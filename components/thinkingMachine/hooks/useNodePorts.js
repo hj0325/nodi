@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import {
   getEdgeContinuationFlag,
   isVerticalConnectorEdge,
+  getNodeAbsolutePosition,
   SOURCE_HANDLE_ID,
   TARGET_HANDLE_ID,
   BOTTOM_SOURCE_HANDLE_ID,
@@ -24,6 +25,7 @@ export function useNodePorts({
   onExplainConflict,
 }) {
   const portVisibilityByNode = useMemo(() => {
+    const nodeMap = new Map(nodes.map((node) => [node.id, node]));
     const map = new Map();
     edges.forEach((edge) => {
       if (edge?.source) {
@@ -68,9 +70,39 @@ export function useNodePorts({
         }
         map.set(edge.target, current);
       }
+
+      const sourceNode = nodeMap.get(edge.source);
+      const targetNode = nodeMap.get(edge.target);
+      if (!sourceNode || !targetNode) return;
+
+      const sourceIsOffMeeting = Boolean(sourceNode?.data?.isOffMeeting);
+      const targetIsOffMeeting = Boolean(targetNode?.data?.isOffMeeting);
+      if (!sourceIsOffMeeting || !targetIsOffMeeting) return;
+
+      const sourceAbs = getNodeAbsolutePosition(sourceNode, nodeMap);
+      const targetAbs = getNodeAbsolutePosition(targetNode, nodeMap);
+      if (targetAbs.y <= sourceAbs.y + 20) return;
+
+      const sourcePorts = map.get(edge.source) || {
+        hasLeftPort: false,
+        hasRightPort: false,
+        hasTopPort: false,
+        hasBottomPort: false,
+      };
+      sourcePorts.hasBottomPort = true;
+      map.set(edge.source, sourcePorts);
+
+      const targetPorts = map.get(edge.target) || {
+        hasLeftPort: false,
+        hasRightPort: false,
+        hasTopPort: false,
+        hasBottomPort: false,
+      };
+      targetPorts.hasTopPort = true;
+      map.set(edge.target, targetPorts);
     });
     return map;
-  }, [edges]);
+  }, [edges, nodes]);
 
   const offMeetingByNodeId = useMemo(() => {
     const map = new Map();

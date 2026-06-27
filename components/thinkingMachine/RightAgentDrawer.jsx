@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Clock,
   Mic,
@@ -23,6 +23,16 @@ import {
   normalizeReasoningStage,
   normalizeNodeData,
 } from "@/lib/thinkingMachine/nodeMeta";
+
+const MEETING_BANNER_CONTENT_FADE = {
+  duration: 0.3,
+  ease: [0.4, 0, 0.2, 1],
+};
+
+const MEETING_BANNER_SHELL_FADE = {
+  duration: 0.42,
+  ease: [0.4, 0, 0.2, 1],
+};
 import NodeDetailCard from "@/components/thinkingMachine/cards/NodeDetailCard";
 import CandidateGraphCard from "@/components/thinkingMachine/cards/CandidateGraphCard";
 import AlignmentSummaryCard from "@/components/thinkingMachine/cards/AlignmentSummaryCard";
@@ -227,6 +237,12 @@ export default function RightAgentDrawer({
   }, [sttTranscript, interimTranscript]);
 
   useEffect(() => {
+    if (isMeetingCaptureLoading) {
+      setPinnedSttText("");
+    }
+  }, [isMeetingCaptureLoading]);
+
+  useEffect(() => {
     if (prevMeetingCaptureLoadingRef.current && !isMeetingCaptureLoading) {
       setPinnedSttText("");
     }
@@ -239,10 +255,15 @@ export default function RightAgentDrawer({
     return "idle";
   }, [isMeetingCaptureLoading, isListening, pinnedSttText]);
 
+  const meetingFlowBannerShellTransition = {
+    background: MEETING_BANNER_SHELL_FADE,
+    boxShadow: MEETING_BANNER_SHELL_FADE,
+  };
+
   const meetingFlowBannerStyle = useMemo(() => {
     if (meetingFlowBannerStatus === "generating") {
       return {
-        height: 56,
+        minHeight: 56,
         background: "rgba(189, 254, 255, 0.22)",
         boxShadow:
           "inset 0px 4px 10.9px #FFFFFF, inset 0px -1px 18.8px rgba(0, 255, 85, 0.48)",
@@ -250,14 +271,13 @@ export default function RightAgentDrawer({
     }
     if (meetingFlowBannerStatus === "stt") {
       return {
-        height: 56,
+        minHeight: 56,
         background: "rgba(255, 255, 255, 0.22)",
         boxShadow:
           "inset 0px 0px 25.5px #5CF3CB, inset 0px -6px 9.6px rgba(255, 255, 255, 0.61)",
       };
     }
     return {
-      height: 75,
       background: "rgba(130, 216, 208, 0.22)",
       boxShadow:
         "inset 0px 4px 10.9px #FFFFFF, inset 0px -6px 9.6px rgba(255, 255, 255, 0.61)",
@@ -372,8 +392,7 @@ export default function RightAgentDrawer({
           }}
         >
           {/* Frame 1410167879 (Absolute Wrapper inside Panel) */}
-          <LayoutGroup id="tm-drawer-body">
-          <motion.div
+          <div
             className="absolute flex min-h-0 flex-col items-start"
             style={{
               width: "272px",
@@ -585,24 +604,26 @@ export default function RightAgentDrawer({
               ) : showMeetingFlowBanner ? (
                 <motion.div
                   key="meeting-flow-slot"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                   className="w-full shrink-0"
-                  style={{ overflow: "hidden" }}
                 >
               <motion.div
-                className="relative flex shrink-0 flex-col items-start overflow-hidden"
+                className="relative flex shrink-0 flex-col items-start"
                 initial={false}
                 animate={{
-                  height: meetingFlowBannerStyle.height,
                   background: meetingFlowBannerStyle.background,
                   boxShadow: meetingFlowBannerStyle.boxShadow,
                 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                transition={meetingFlowBannerShellTransition}
                 style={{
                   width: "261px",
+                  height: "auto",
+                  ...(meetingFlowBannerStyle.minHeight != null
+                    ? { minHeight: meetingFlowBannerStyle.minHeight }
+                    : {}),
                   padding: "13px 19px",
                   gap: "10px",
                   borderRadius: "21px",
@@ -612,16 +633,17 @@ export default function RightAgentDrawer({
                   filter: "drop-shadow(0px 4px 26.5px rgba(132, 132, 132, 0.19))",
                 }}
               >
+                <div className="relative w-full">
                 <AnimatePresence mode="wait" initial={false}>
                   {meetingFlowBannerStatus === "generating" ? (
                     <motion.div
                       key="generating"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                      className="flex flex-col items-start"
-                      style={{ width: "194px", gap: "2px" }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={MEETING_BANNER_CONTENT_FADE}
+                      className="flex w-full flex-col items-start"
+                      style={{ gap: "2px" }}
                     >
                       <span
                         style={{
@@ -651,12 +673,12 @@ export default function RightAgentDrawer({
                   ) : meetingFlowBannerStatus === "stt" ? (
                     <motion.div
                       key="stt"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                      className="flex flex-col items-start"
-                      style={{ width: "194px", gap: "2px" }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={MEETING_BANNER_CONTENT_FADE}
+                      className="flex w-full flex-col items-start"
+                      style={{ gap: "2px" }}
                     >
                       <span
                         style={{
@@ -670,29 +692,31 @@ export default function RightAgentDrawer({
                         AI 인식중...
                       </span>
                       <p
-                        className="max-h-[30px] overflow-y-auto"
                         style={{
-                          width: "194px",
+                          width: "100%",
+                          minHeight: "15px",
                           margin: 0,
                           fontFamily: "'Pretendard Variable', sans-serif",
                           fontWeight: 400,
                           fontSize: "11px",
                           lineHeight: "15px",
                           color: "#139D8C",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "keep-all",
                         }}
                       >
-                        {displaySttText}
+                        {displaySttText || "\u00A0"}
                       </p>
                     </motion.div>
                   ) : (
                     <motion.div
                       key="idle"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex flex-col items-start"
-                      style={{ width: "194px", gap: "2px" }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={MEETING_BANNER_CONTENT_FADE}
+                      className="flex w-full flex-col items-start"
+                      style={{ gap: "2px" }}
                     >
                       <span
                         style={{
@@ -710,8 +734,9 @@ export default function RightAgentDrawer({
                           fontFamily: "'Pretendard Variable', sans-serif",
                           fontWeight: 400,
                           fontSize: "11px",
-                          lineHeight: "14px",
+                          lineHeight: "15px",
                           color: "#444859",
+                          wordBreak: "keep-all",
                         }}
                       >
                         {isSeededProject
@@ -723,8 +748,9 @@ export default function RightAgentDrawer({
                           fontFamily: "'Pretendard Variable', sans-serif",
                           fontWeight: 400,
                           fontSize: "11px",
-                          lineHeight: "14px",
+                          lineHeight: "15px",
                           color: "#139D8C",
+                          wordBreak: "keep-all",
                         }}
                       >
                         보이스로 아이디어를 공유해주세요!
@@ -732,15 +758,14 @@ export default function RightAgentDrawer({
                     </motion.div>
                   )}
                 </AnimatePresence>
+                </div>
               </motion.div>
                 </motion.div>
               ) : null}
             </AnimatePresence>
 
             {/* Row 2: Timeline Scroll List (Frame 1410167878 & Frame 1410167877) */}
-            <motion.div
-              layout="position"
-              transition={{ layout: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
+            <div
               className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pr-1 pb-24 [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-white/40 [&::-webkit-scrollbar-track]:rounded-[17px] [&::-webkit-scrollbar-thumb]:bg-[#A4DCCD] [&::-webkit-scrollbar-thumb]:rounded-[17px]"
               style={{
                 width: "264px",
@@ -952,9 +977,8 @@ export default function RightAgentDrawer({
                   );
                 })
               )}
-            </motion.div>
-          </motion.div>
-          </LayoutGroup>
+            </div>
+          </div>
 
           {/* Bottom Fade Mask Gradient Overlay */}
           <div
